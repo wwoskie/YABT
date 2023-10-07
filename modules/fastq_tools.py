@@ -6,7 +6,7 @@ def count_gc_content(seq: str):
     - seq (str): given sequence
 
     Return:
-    - float: GC-ratio of a given seq as a percentage
+    - gc_content (float): GC-ratio of a given seq as a percentage
     '''
 
     gc_count = 0
