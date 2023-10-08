@@ -71,7 +71,7 @@ def count_mean_quality(quality_seq: str) -> float:
     mean_quality = sum(q_score_lst) / len(q_score_lst)
     return mean_quality
 
-def check_quality(mean_quality: float, quality_threshold: int | float) -> bool:
+def check_mean_quality(mean_quality: float, quality_threshold: int | float) -> bool:
     '''
     Counts if mean read quality is greater or equal to quality_threshold
 
@@ -107,7 +107,7 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
         has_passed_filters = (
             check_if_in_bounds(count_gc_content(read_seq, gc_bounds)) # is in gc bounds
             and check_if_in_bounds(len(), length_bounds) # in length bounds
-            and check_quality(count_mean_quality(check_quality)) # quality grater than
+            and check_mean_quality(count_mean_quality(read_quality), quality_threshold) # quality grater than
             )
         
         if not has_passed_filters:
