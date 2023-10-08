@@ -230,7 +230,7 @@ def get_length_of_protein(seq: str) -> int:
     return len(seq)
 
 
-def count_aa(seq: str, aminoacids: str = None) -> dict:
+def count_aa(seq: str, aminoacids_to_count: str = None) -> dict:
     """
     Counts the number of given or all amino acids in a protein sequence.
 
@@ -243,17 +243,17 @@ def count_aa(seq: str, aminoacids: str = None) -> dict:
     """
 
     aa_dict_count = {}
-    if (aminoacids is None) or (aminoacids == ''):
+    if (aminoacids_to_count is None) or (aminoacids_to_count == ''):
         '''
         I added an additional condition for user-friendly experience.
         E.g., we can want to find specific aminoacid, look on result and then look on all aminoacids.
         Without this condition we have to delete keyword argument, but with it we can only make it empty.
         '''
-        aminoacids = ''.join(set(seq))
-    for aa in aminoacids:
-        aa_dict_count[aa] = seq.count(aa)
+        aminoacids_to_count = set(seq)
+    for aa in seq:
+        if aa in aminoacids_to_count:
+            aa_dict_count.get(aa, 1) + 1 # return 1 if aa met first time, add 1 if not
     return aa_dict_count
-
 
 def get_fracture_of_aa(seq: str, show_as_percentage: bool = False, aminoacids: str = None) -> dict:
     """
