@@ -78,7 +78,7 @@ print(fasta_seqs)
 
 This module can perform the following operations on sequences:
 
-## - `'check_seq_type'`
+#### - `'check_seq_type'`
 
 Checks seq type (DNA, RNA or None). Returns str or None. Cases like ACG assumed to be DNA
 
@@ -104,7 +104,7 @@ print(yabt.run_dna_rna_tools(yabt.create_input_dict('I love Python'), 'check_seq
 > None
 ```
 
-## - `'reverse'`
+#### - `'reverse'`
 
 Reverses given seq. 
 
@@ -126,7 +126,7 @@ yabt.run_dna_rna_tools(yabt.create_input_dict('lol'), 'reverse')
 > ... ValueError: Can only work with DNA or RNA sequence
 ```
 
-## - `'complement'`
+#### - `'complement'`
 
 Complements given seq. Nucleic acid-type blind
 
@@ -145,7 +145,7 @@ yabt.run_dna_rna_tools(yabt.create_input_dict('ATGC', 'cuga'), 'complement')
 > {0: 'TACG', 1: 'gacu'}
 ```
 
-## - `'transcribe'`
+#### - `'transcribe'`
 
 Transcribes given DNA to RNA or reverse transcribes RNA to DNA. Nucleic acid-type blind
 
