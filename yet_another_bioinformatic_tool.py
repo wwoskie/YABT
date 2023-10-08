@@ -73,8 +73,8 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
         filtered seqs
     '''
 
-    gc_bounds = make_bounds(gc_bounds)
-    length_bounds = make_bounds(length_bounds) # make tuple-like bounds
+    gc_bounds = fastq_tools.make_bounds(gc_bounds)
+    length_bounds = fastq_tools.make_bounds(length_bounds) # make tuple-like bounds
 
     passed_filtration_seqs = {}
 
@@ -83,11 +83,11 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
             raise ValueError('Cannnot work with sequence of length 0')
 
         has_passed_filters = (
-            check_if_in_bounds(count_gc_content(read_seq),
+            fastq_tools.check_if_in_bounds(fastq_tools.count_gc_content(read_seq),
                                gc_bounds) # is in gc bounds
-            and check_if_in_bounds(len(read_seq),
+            and fastq_tools.check_if_in_bounds(len(read_seq),
                                    length_bounds) # in length bounds
-            and check_mean_quality(count_mean_quality(read_quality),
+            and fastq_tools.check_mean_quality(fastq_tools.count_mean_quality(read_quality),
                                    quality_threshold) # quality greater than
             )
 
