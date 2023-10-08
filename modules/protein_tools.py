@@ -78,7 +78,7 @@ RNA_CODON_TABLE = {
 
 def read_seq_from_fasta(path_to_seq: str,
                         use_full_name: bool = False,
-                        **_) -> dict:
+                        ) -> dict:
     """
     Reads sequences from fasta file and returns dictionary.
 
@@ -90,7 +90,7 @@ def read_seq_from_fasta(path_to_seq: str,
         dict of sequences names as keys and sequences themselves as values {'seq_name': 'sequence',}
     """
 
-    with open(path_to_seq, 'r') as f:
+    with open(path_to_seq, 'r', encoding='UTF-8') as f:
         out_dct = {}
         name = None # None is set to skip first ''.join(current_seqs)
         for line in f:
@@ -244,18 +244,16 @@ def count_aa(seq: str, aminoacids_to_count: str = None) -> dict:
 
     aa_dict_count = {}
     if (aminoacids_to_count is None) or (aminoacids_to_count == ''):
-        '''
-        I added an additional condition for user-friendly experience.
-        E.g., we can want to find specific aminoacid, look on result and then look on all aminoacids.
-        Without this condition we have to delete keyword argument, but with it we can only make it empty.
-        '''
         aminoacids_to_count = set(seq)
     for aa in seq:
         if aa in aminoacids_to_count:
-            aa_dict_count[aa] = aa_dict_count.get(aa, 0) + 1 # return 1 if aa met first time, add 1 if not
+            aa_dict_count[aa] = aa_dict_count.get(aa, 0) + 1 # get count and add 1
     return aa_dict_count
 
-def get_fracture_of_aa(seq: str, show_as_percentage: bool = False, aminoacids: str = None) -> dict:
+
+def get_fracture_of_aa(seq: str,
+                       show_as_percentage: bool = False,
+                       aminoacids_to_count: str = None) -> dict:
     """
     Calculates the fracture or percentage of amino acids in a protein sequence.
 
@@ -274,10 +272,9 @@ def get_fracture_of_aa(seq: str, show_as_percentage: bool = False, aminoacids: s
     else:
         mult = 1
         round_var = 4
-    aa_dict_count = count_aa(seq, aminoacids=aminoacids)
+    aa_dict_count = count_aa(seq, aminoacids_to_count=aminoacids_to_count)
     aa_dict_percent = {}
     len_of_protein = get_length_of_protein(seq)
     for aa, count in aa_dict_count.items():
         aa_dict_percent[aa] = round(count / len_of_protein * mult, round_var)
     return aa_dict_percent
-
