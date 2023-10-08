@@ -41,7 +41,7 @@ def run_dna_rna_tools(seqs: dict, command: str) -> dict:
             if command == 'complement':
                 output_dict |= {seq_name: dna_rna_tools.complement(seq, nucl_type)}
             else:
-                output_dict |= {seq_name: command_dict[command](seq)}
+                output_dict |= {seq_name: command_dict_nucl[command](seq)}
 
     if len(output_dict) == 1:
         return output_dict[list(output_dict.keys())[0]]
