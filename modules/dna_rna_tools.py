@@ -109,3 +109,19 @@ command_dict = {
     'transcribe': transcribe,
 }
 
+
+def run_dna_rna_tools(seqs: dict, command: str) -> dict:
+
+    output_dict = {}
+
+    for seq_name, seq in seqs.items(): 
+        if len(seq) == 0: # dodge zero division error to a more understandable one
+            raise ValueError('Cannot work with sequence of length 0')
+        if command == 'check_seq_type':
+            output_dict |= {seq_name: check_seq_type(seq)}
+        elif isinstance(check_seq_type(seq), None):
+            raise ValueError('Can only work with DNA or RNA sequence')
+        else:
+            output_dict |= {seq_name: command_dict[command](seq)}
+
+    return output_dict
