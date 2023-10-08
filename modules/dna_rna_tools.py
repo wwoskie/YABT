@@ -98,9 +98,8 @@ def create_input_dict(*inp: str | list) -> dict:
     """
 
     parsed_dct = {}
-    if isinstance(inp, tuple):
-        for i, seq in enumerate(inp):
-            parsed_dct |= {i: seq}
+    for i, seq in enumerate(inp):
+        parsed_dct |= {i: seq}
 
     return parsed_dct
 
