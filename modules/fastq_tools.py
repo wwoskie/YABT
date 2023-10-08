@@ -1,4 +1,4 @@
-def count_gc_content(seq: str):
+def count_gc_content(seq: str) -> float:
     '''
     Counts GC-content in a given sequence
 
@@ -13,5 +13,10 @@ def count_gc_content(seq: str):
     for letter in seq.upper(): # used loop instead of .count method to iterate over seq only once (O(n))
         if letter == 'G' or letter == 'C':
             gc_count += 1
+    if len(seq) == 0:
+        raise ValueError('Cannnot work with sequence of length 0')
     gc_content = gc_count / len(seq) * 100 # len() is believed to be O(1)
     return gc_content
+
+
+
