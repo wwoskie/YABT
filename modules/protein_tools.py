@@ -1,0 +1,48 @@
+'''
+Manupulate protein sequences.
+'''
+
+RNA_AA_TABLE = {
+    'F': ['UUU', 'UUC'],
+    'L': ['UUA', 'UUG', 'CUU', 'CUC', 'CUA', 'CUG'],
+    'S': ['UCU', 'UCC', 'UCA', 'UCG', 'AGU', 'AGC'],
+    'Y': ['UAU', 'UAC'],
+    '*': ['UAA', 'UAG', 'UGA', 'uaa', 'uag', 'uga'],
+    'C': ['UGU', 'UGC'],
+    'W': ['UGG'],
+    'P': ['CCU', 'CCC', 'CCA', 'CCG'],
+    'H': ['CAU', 'CAC'],
+    'Q': ['CAA', 'CAG'],
+    'R': ['CGU', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG'],
+    'I': ['AUU', 'AUC', 'AUA'],
+    'M': ['AUG'],
+    'T': ['ACU', 'ACC', 'ACA', 'ACG'],
+    'N': ['AAU', 'AAC'],
+    'K': ['AAA', 'AAG'],
+    'V': ['GUU', 'GUC', 'GUA', 'GUG'],
+    'A': ['GCU', 'GCC', 'GCA', 'GCG'],
+    'D': ['GAU', 'GAC'],
+    'E': ['GAA', 'GAG'],
+    'G': ['GGU', 'GGC', 'GGA', 'GGG'],
+    'f': ['uuu', 'uuc'],
+    'l': ['uua', 'uug', 'cuu', 'cuc', 'cua', 'cug'],
+    's': ['ucu', 'ucc', 'uca', 'ucg', 'agu', 'agc'],
+    'y': ['uau', 'uac'],
+    'c': ['ugu', 'ugc'],
+    'w': ['ugg'],
+    'p': ['ccu', 'ccc', 'cca', 'ccg'],
+    'h': ['cau', 'cac'],
+    'q': ['caa', 'cag'],
+    'r': ['cgu', 'cgc', 'cga', 'cgg', 'aga', 'agg'],
+    'i': ['auu', 'auc', 'aua'],
+    'm': ['aug'],
+    't': ['acu', 'acc', 'aca', 'acg'],
+    'n': ['aau', 'aac'],
+    'k': ['aaa', 'aag'],
+    'v': ['guu', 'guc', 'gua', 'gug'],
+    'a': ['gcu', 'gcc', 'gca', 'gcg'],
+    'd': ['gau', 'gac'],
+    'e': ['gaa', 'gag'],
+    'g': ['ggu', 'ggc', 'gga', 'ggg']
+}
+
