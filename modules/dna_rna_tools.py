@@ -1,8 +1,11 @@
 # TODO add module docstring
-NUCL_COMP_DCT = {'RNA': {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G',
-                         'a': 'u', 'u': 'a', 'g': 'c', 'c': 'g'},
-                 'DNA': {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
-                         'a': 't', 't': 'a', 'g': 'c', 'c': 'g'}}
+NUCL_COMP_DCT = {
+    'RNA': {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G',
+            'a': 'u', 'u': 'a', 'g': 'c', 'c': 'g'},
+    'DNA': {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+            'a': 't', 't': 'a', 'g': 'c', 'c': 'g'},
+    'DNA_to_RNA': {'T': 'U', 'U': 'T', 't': 'u', 'u': 't'}
+}
 
 
 def check_seq_type(seq: str) -> str | None:
@@ -61,13 +64,19 @@ def complement(seq: str, nucl_type: str) -> str:
 
 def transcribe(seq: str) -> str:
     '''
-    Transcribes given DNA to RNA
+    Transcribes given DNA to RNA or reverse transcribes RNA to DNA. Nucleic acid-type blind
 
     Arguments:
     - seq (str): given sequence
 
     Return:
-    - srt: Transcribed RNA seq
+    - str: Transcribed RNA seq
     '''
 
-    return seq.replace('T', 'U').replace('t', 'u')
+    outseq = []
+    for letter in seq: # loop here to dodge O(n^2) double-replace case (can be sensitive on larger seq)
+        if letter in NUCL_COMP_DCT['DNA_to_RNA']:
+            letter = NUCL_COMP_DCT['DNA_to_RNA'][letter]
+        outseq.append(letter)
+
+    return ''.join(outseq)
