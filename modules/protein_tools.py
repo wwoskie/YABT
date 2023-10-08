@@ -127,4 +127,18 @@ def get_sites_lengths(sites: list) -> dict:
     return sites_length_dct
 
 
+def invert_dct(dct: dict) -> dict:
+    """
+    Inverts a dict. Used inside find_sites func
 
+    Arguments:
+    - dct (dict): dict to be inverted
+
+    Return:
+    - dict: inverted dict
+    """
+
+    inv_dct = {}
+    for k, v in dct.items():
+        inv_dct[v] = inv_dct.get(v, []) + [k]  # get value from dict (return [] if empty) and append key
+    return inv_dct
