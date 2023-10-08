@@ -19,4 +19,21 @@ def count_gc_content(seq: str) -> float:
     return gc_content
 
 
+def make_bounds(bounds: int | float | list | tuple) -> tuple:
+    '''
+    Checks input bounds to be lists or tuple or converts bounds from int and float to format (0, int) or (0, float)
+
+    Arguments:
+    - bounds (int | float | list | tuple): given bounds
+
+    Return:
+    - bounds (tuple): bounds in format of tuple
+    '''
+    
+    if type(bounds) == int or type(bounds) == float:
+        return (0, bounds)
+    elif type(bounds) == list or type(bounds) == tuple:
+        return tuple(bounds) # make return more expexted for further maintaining if list passed
+    else:
+        raise TypeError(f'Cannot work with {type(bounds).__name__} type')
 
