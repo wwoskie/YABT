@@ -84,3 +84,34 @@ def check_quality(mean_quality: float, quality_threshold: int | float) -> bool:
     '''
 
     return mean_quality >= quality_threshold
+
+
+def run_fastq_tools(seqs: dict, # how can i make native type hint here?
+                    gc_bounds: tuple | list| int | float = (0, 100),
+                    length_bounds: tuple | list| int | float = (0, 2**32),
+                    quality_threshold: int | float = 0) -> dict:
+    '''
+    Runs fastq filtration by GC-content, length and quality procedure on input dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
+
+    Arguments:
+    - seqs (dict): input dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
+    - gc_bounds (tuple | list | int | float): bounds for GC filtration, can process int, float, or tuple and list of length 2. Default is (0, 100) (not filtered by GC)
+    - length_bounds (tuple | list| int | float): bounds for length filtration, full analog of gc_bounds. Default is (0, 2**32)
+    - quality_threshold (int | float): quality threshold to check against. Default is 0
+
+    Return:
+    - seqs (dict): dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')} with filtered seqs
+    '''
+
+    for read_name, (read_seq, read_quality) in seqs.items(): # TODO add is_dna check 
+        has_passed_filters = (
+            check_if_in_bounds(count_gc_content(read_seq, gc_bounds)) # is in gc bounds
+            and check_if_in_bounds(len(), length_bounds) # in length bounds
+            and check_quality(count_mean_quality(check_quality)) # quality grater than
+            )
+        
+        if not has_passed_filters:
+            del seqs[read_name]
+
+    return seqs
+
