@@ -117,7 +117,9 @@ def run_dna_rna_tools(seqs: dict, command: str) -> dict:
     - seqs (dict): Input dict of format {seq_name: 'seq'}
 
     Return:
-    - output_dict (dict): dict of results and operations
+    - output_dict (dict | str | bool): 
+        dict of results of operations {seq_name: 'result'} or one operation result 
+        if one sequence given
     '''
 
     output_dict = {}
