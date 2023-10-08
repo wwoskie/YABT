@@ -1,3 +1,7 @@
+'''
+Filtrate fastq reads
+'''
+
 def count_gc_content(seq: str) -> float:
     '''
     Counts GC-content in a given sequence

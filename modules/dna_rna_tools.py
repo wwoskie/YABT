@@ -1,4 +1,7 @@
-# TODO add module docstring
+'''
+Manupulate nucleic acid sequences.
+'''
+
 NUCL_COMP_DCT = {
     'RNA': {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G',
             'a': 'u', 'u': 'a', 'g': 'c', 'c': 'g'},
@@ -42,6 +45,7 @@ def reverse(seq: str) -> str:
     Return:
     - srt: Reversed seq
     '''
+
     return seq[::-1]
 
 
@@ -131,7 +135,7 @@ def run_dna_rna_tools(seqs: dict, command: str) -> dict:
             nucl_type = check_seq_type(seq)
             if nucl_type is None:
                 raise ValueError('Can only work with DNA or RNA sequence')
-            
+
             if command == 'complement':
                 output_dict |= {seq_name: complement(seq, nucl_type)}
             else:
