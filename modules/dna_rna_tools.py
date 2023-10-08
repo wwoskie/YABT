@@ -74,7 +74,7 @@ def transcribe(seq: str) -> str:
     '''
 
     outseq = []
-    for letter in seq: # loop here to dodge O(n^2) double-replace case (can be sensitive on larger seq)
+    for letter in seq: # loop here to dodge O(n^2) double-replace case
         if letter in NUCL_COMP_DCT['DNA_to_RNA']:
             letter = NUCL_COMP_DCT['DNA_to_RNA'][letter]
         outseq.append(letter)
@@ -99,3 +99,19 @@ def create_input_dict(*inp: str | list) -> dict:
             parsed_dct |= {i: seq}
 
     return parsed_dct
+
+
+rna_command_list = {
+    'reverse_transcribe': transcribe,
+}
+
+dna_command_list = {
+    'transcribe': transcribe,
+}
+
+nucl_blind_command_list = {
+    'check_seq_type': check_seq_type,
+    'reverse': reverse,
+    'complement': complement,
+
+}
