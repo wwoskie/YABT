@@ -38,6 +38,21 @@ def make_bounds(bounds: int | float | list | tuple) -> tuple:
         raise TypeError(f'Cannot work with {type(bounds).__name__} type')
     
 
+def check_if_in_bounds(value: int | float, bounds: tuple) -> bool:
+    '''
+    Checks if value is in bounds (start and end included!) and returns True/False
+
+    Arguments:
+    - value (int | float): given value
+    - bounds (tuple): bounds
+
+    Return:
+    - (bool): if value in bounds
+    '''
+    
+    return bounds[0] <= value <= bounds[1]
+
+
 def count_mean_quality(quality_seq: str) -> float:
     '''
     Counts mean read quality for a given quality str
