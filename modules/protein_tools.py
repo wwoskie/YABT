@@ -46,7 +46,7 @@ RNA_AA_TABLE = {
     'g': ['ggu', 'ggc', 'gga', 'ggg']
 }
 
-RNA_CODON_TABLE = { 
+RNA_CODON_TABLE = {
   'UUU': 'F', 'UUC': 'F', 'UUA': 'L', 'UUG': 'L', 'UCU': 'S',
   'UCC': 'S', 'UCA': 'S', 'UCG': 'S', 'UAU': 'Y', 'UAC': 'Y',
   'UAA': '*', 'UAG': '*', 'UGU': 'C', 'UGC': 'C', 'UGA': '*',
@@ -86,17 +86,18 @@ def read_seq_from_fasta(path_to_seq: str,
     - path_to_seq (str): path to file
 
     Return:
-    - dict: dict of sequences names as keys and sequences themselves as values {'seq_name': 'sequence',}
+    - dict: 
+        dict of sequences names as keys and sequences themselves as values {'seq_name': 'sequence',}
     """
 
-    with open(path_to_seq) as f:
+    with open(path_to_seq, 'r') as f:
         out_dct = {}
-        name = None # None is set to skip first ''.join(current_seqs) 
+        name = None # None is set to skip first ''.join(current_seqs)
         for line in f:
             line = line.strip()
             if line.startswith('>'):  # check for first line in seq
-                if not name is None:
-                    out_dct[name] = ''.join(current_seqs) # join current_seqs to str if not first seq_name
+                if not name is None: # join current_seqs to str if not first seq_name
+                    out_dct[name] = ''.join(current_seqs)
                 if use_full_name:  # check if user set full name in fasta
                     name = line[1:]  # take whole fasta properties (e.g. if names not unique)
                 else:
@@ -106,7 +107,7 @@ def read_seq_from_fasta(path_to_seq: str,
                 current_seqs.append(line)  # get value from dict (return '' if empty) and append str
 
         out_dct[name] = ''.join(current_seqs) # collects last seqs to dict
-            
+
     return out_dct
 
 
@@ -139,8 +140,8 @@ def invert_dct(dct: dict) -> dict:
     """
 
     inv_dct = {}
-    for k, v in dct.items():
-        inv_dct[v] = inv_dct.get(v, []) + [k]  # get value from dict (return [] if empty) and append key
+    for k, v in dct.items(): # get value from dict (return [] if empty) and append key
+        inv_dct[v] = inv_dct.get(v, []) + [k]
     return inv_dct
 
 
@@ -158,3 +159,39 @@ def is_protein_valid(seq: str) -> bool:
     if set(seq).issubset(RNA_AA_TABLE):
         return True
     return False
+
+
+def find_sites(seq: str,
+               sites: list,
+               is_one_based: bool = False
+               ) -> dict:
+    """
+    Finds indexes of given sites.
+
+    Arguments:
+    - seq (str): seq to be checked
+    - sites (list): sites to be found in form of a list
+    - is_one_based (bool): whether result should be 0- (False) or 1-indexed (True). Default False
+
+    Return:
+    - dict: dictionary of sites as keys and lists of indexes for the site where it's been found
+    """
+
+    window_sizes = invert_dct(get_sites_lengths(sites))
+    # get lengths of all sites and stick them together to avoid
+    # passing through seq multiple times if possible
+    found_sites = {}
+    # perform iteration for all given lengths of sites
+    for window_size, sites_of_window_size in window_sizes.items():
+        for i in range(len(seq) - window_size + 1):
+            # iterate through seq with step one and consider window
+            # of site length each step
+            scatter = seq[i:i + window_size]
+            # get fragment of sequence with length of window i.e. scatter
+            for site in sites_of_window_size:
+                if scatter == site:  # check if scatter is site
+                    found_sites[site] = (
+                            found_sites.get(site, [])  # get
+                            + [i + is_one_based]
+                    )  # append index to list in dict
+    return found_sites
