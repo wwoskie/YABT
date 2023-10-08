@@ -27,3 +27,16 @@ def check_seq_type(seq: str) -> str | None:
     elif seq.issubset(dna): # in DNA and not in RNA (ACG (no T or U) cases considered DNA)
         seq_type ='DNA'
     return seq_type
+
+
+def reverse(seq: str) -> str:
+    '''
+    Reverses given seq
+
+    Arguments:
+    - seq (str): given sequence
+
+    Return:
+    - srt: Reversed seq
+    '''
+    return seq[::-1]
