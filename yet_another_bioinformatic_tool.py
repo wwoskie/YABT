@@ -6,6 +6,15 @@ import modules.dna_rna_tools as dna_rna_tools
 import modules.protein_tools as protein_tools
 import modules.fastq_tools as fastq_tools
 
+
+command_dict = {
+    'check_seq_type': check_seq_type,
+    'reverse': reverse,
+    'complement': complement,
+    'transcribe': transcribe,
+}
+
+
 def run_dna_rna_tools(seqs: dict, command: str) -> dict:
     '''
     Runs dna_rna_tools on given dict of seqs with given command
