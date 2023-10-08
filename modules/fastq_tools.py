@@ -100,18 +100,25 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
     - quality_threshold (int | float): quality threshold to check against. Default is 0
 
     Return:
-    - seqs (dict): dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')} with filtered seqs
+    - passed_seqs (dict): dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')} with filtered seqs
     '''
+    
+    gc_bounds, length_bounds = make_bounds(gc_bounds), make_bounds(length_bounds) # make tuple-like bounds
+
+    passed_seqs = {}
 
     for read_name, (read_seq, read_quality) in seqs.items(): # TODO add is_dna check 
         has_passed_filters = (
-            check_if_in_bounds(count_gc_content(read_seq, gc_bounds)) # is in gc bounds
-            and check_if_in_bounds(len(), length_bounds) # in length bounds
-            and check_mean_quality(count_mean_quality(read_quality), quality_threshold) # quality grater than
+            check_if_in_bounds(count_gc_content(read_seq),
+                               gc_bounds) # is in gc bounds
+            and check_if_in_bounds(len(read_seq), 
+                                   length_bounds) # in length bounds
+            and check_mean_quality(count_mean_quality(read_quality), 
+                                   quality_threshold) # quality greater than
             )
         
-        if not has_passed_filters:
-            del seqs[read_name]
+        if has_passed_filters: # how can i avoid copy here?
+            passed_seqs[read_name] = seqs[read_name]
 
-    return seqs
+    return passed_seqs
 
