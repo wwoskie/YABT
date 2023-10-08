@@ -91,4 +91,3 @@ def check_mean_quality(mean_quality: float, quality_threshold: int | float) -> b
     '''
 
     return mean_quality >= quality_threshold
-

@@ -103,4 +103,3 @@ def create_input_dict(*inp: str | list) -> dict:
         parsed_dct |= {i: seq}
 
     return parsed_dct
-

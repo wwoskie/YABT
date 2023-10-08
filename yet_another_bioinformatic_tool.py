@@ -90,7 +90,7 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
 
     passed_filtration_seqs = {}
 
-    for read_name, (read_seq, read_quality) in seqs.items(): # TODO add is_dna check
+    for read_name, (read_seq, read_quality) in seqs.items():
         if len(read_seq) == 0: # dodge zero division error to a more understandable one
             raise ValueError('Cannnot work with sequence of length 0')
 
@@ -121,7 +121,8 @@ def run_ultimate_protein_tools(seqs: dict,
     - **kwargs to be passed to inner funcs
 
     Return:
-    - output_dct (dict): dict where keys are number or name of seq and values are results of command run
+    - output_dct (dict): 
+        dict where keys are number or name of seq and values are results of command run
     """
 
     output_dict = {}
@@ -130,11 +131,11 @@ def run_ultimate_protein_tools(seqs: dict,
             if command == 'is_protein_valid':
                 output_dict |= {seq_name: protein_tools.is_protein_valid(seq)}
             else:
-                if not protein_tools.is_protein_valid(seq):
-                    raise ValueError(f'Invalid protein, name/number: {seq_name}')
-                else:
-                    output_dict |= {seq_name: 
+                if protein_tools.is_protein_valid(seq):
+                    output_dict |= {seq_name:
                                     command_dct_prot[command](seq, **kwargs)}
+                else:
+                    raise ValueError(f'Invalid protein, name/number: {seq_name}')
 
     if len(output_dict) == 1:
         return output_dict[list(output_dict.keys())[0]]
