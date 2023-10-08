@@ -21,6 +21,8 @@ import yet_another_bioinformatic_tool as yabt
 ```
 One can use any custom name for import but we suggest using `yabt` as module shortname.
 
+But don't limit yourself to only these two ways, as you can find more on modules as a whole [here](https://docs.python.org/3/tutorial/modules.html)
+
 
 ### Quickstart
 
