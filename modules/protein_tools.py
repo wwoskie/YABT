@@ -182,6 +182,8 @@ def find_sites(seq: str,
     # passing through seq multiple times if possible
     found_sites = {}
     # perform iteration for all given lengths of sites
+    # pls don't be scared of nested loops 2 of them are supposed to be relatively small
+    # if user is not intended to search huge amount of sites
     for window_size, sites_of_window_size in window_sizes.items():
         for i in range(len(seq) - window_size + 1):
             # iterate through seq with step one and consider window
@@ -195,3 +197,36 @@ def find_sites(seq: str,
                             + [i + is_one_based]
                     )  # append index to list in dict
     return found_sites
+
+
+def get_protein_rnas_number(seq: int, **_) -> int:
+    """
+    Get number of all possible RNA's for a given protein.
+
+    Arguments:
+    - seq (str): seq to be checked
+
+    Return:
+    - rnas_num (int): number of possible RNA's for seq
+    """
+
+    rnas_num = 1
+    for amino_acid in seq:
+        rnas_num *= len(RNA_AA_TABLE[amino_acid])
+    return rnas_num
+
+
+def get_length_of_protein(seq: str) -> int:
+    """
+    Calculates the length of a protein.
+
+    Arguments:
+    - seq (str): sequence to calculate the length
+
+    Return:
+    - int: sequence length
+    """
+
+    return len(seq)
+
+
