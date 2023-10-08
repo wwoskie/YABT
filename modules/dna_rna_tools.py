@@ -31,7 +31,7 @@ def check_seq_type(seq: str) -> str | None:
 
 def reverse(seq: str) -> str:
     '''
-    Reverses given seq
+    Reverses given seq. 
 
     Arguments:
     - seq (str): given sequence
@@ -44,7 +44,7 @@ def reverse(seq: str) -> str:
 
 def complement(seq: str, nucl_type: str) -> str:
     '''
-    Complements given seq
+    Complements given seq. Nucleic acid-type blind
 
     Arguments:
     - seq (str): given sequence
@@ -52,9 +52,22 @@ def complement(seq: str, nucl_type: str) -> str:
     Return:
     - srt: Complemented seq
     '''
+
     outseq = []
     for letter in seq:
         outseq.append(NUCL_COMP_DCT[nucl_type][letter])
     return ''.join(outseq)
 
 
+def transcribe(seq: str) -> str:
+    '''
+    Transcribes given DNA to RNA
+
+    Arguments:
+    - seq (str): given sequence
+
+    Return:
+    - srt: Transcribed RNA seq
+    '''
+
+    return seq.replace('T', 'U').replace('t', 'u')
