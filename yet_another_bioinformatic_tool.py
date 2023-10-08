@@ -34,7 +34,7 @@ def run_dna_rna_tools(seqs: dict, command: str) -> dict:
         if command == 'check_seq_type': # user may want to check given seqs
             output_dict |= {seq_name: dna_rna_tools.check_seq_type(seq)}
         else: # if other command
-            nucl_type = check_seq_type(seq)
+            nucl_type = dna_rna_tools.check_seq_type(seq)
             if nucl_type is None:
                 raise ValueError('Can only work with DNA or RNA sequence')
 
