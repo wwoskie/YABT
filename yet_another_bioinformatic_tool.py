@@ -124,7 +124,7 @@ def run_ultimate_protein_tools(seqs: dict,
     - output_dct (dict): dict where keys are number or name of seq and values are results of command run
     """
 
-    output_dct = {}
+    output_dict = {}
     for seq_name, seq in seqs.items():
         if command in command_dct_prot:
             if command == 'is_protein_valid':
@@ -134,6 +134,6 @@ def run_ultimate_protein_tools(seqs: dict,
                     output_dict |= {seq_name: 
                                     command_dct_prot[command](seq, **kwargs)}
 
-    if len(output_dct) == 1:
-        return output_dct[list(output_dct.keys())[0]]
-    return output_dct
+    if len(output_dict) == 1:
+        return output_dict[list(output_dict.keys())[0]]
+    return output_dict
