@@ -36,3 +36,22 @@ def make_bounds(bounds: int | float | list | tuple) -> tuple:
         return tuple(bounds) # make return more expexted for further maintaining if list passed
     else:
         raise TypeError(f'Cannot work with {type(bounds).__name__} type')
+    
+
+def count_mean_quality(quality_seq: str) -> float:
+    '''
+    Counts mean read quality for a given quality str
+
+    Arguments:
+    - quality_seq (str): given quality str in ASCII format
+
+    Return:
+    - mean_quality (float): mean quality of read
+    '''
+
+    q_score_lst = []
+    for single_letter_quality in quality_seq:
+        q_score = ord(single_letter_quality) - 33
+        q_score_lst.append(q_score)
+    mean_quality = sum(q_score_lst) / len(q_score_lst)
+    return mean_quality
