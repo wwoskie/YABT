@@ -142,3 +142,19 @@ def invert_dct(dct: dict) -> dict:
     for k, v in dct.items():
         inv_dct[v] = inv_dct.get(v, []) + [k]  # get value from dict (return [] if empty) and append key
     return inv_dct
+
+
+def is_protein_valid(seq: str) -> bool:
+    """
+    Checks if protein is valid.
+
+    Arguments:
+    - seq (str): seq to be checked
+
+    Return:
+    - bool, the result of the check
+    """
+
+    if set(seq).issubset(RNA_AA_TABLE):
+        return True
+    return False
