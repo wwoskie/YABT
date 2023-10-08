@@ -16,6 +16,16 @@ command_dict_nucl = {
 }
 
 
+command_dct_prot = {
+    'find_sites': protein_tools.find_sites,
+    'get_protein_rnas_number': protein_tools.get_protein_rnas_number,
+    'is_protein_valid': protein_tools.is_protein_valid,
+    'get_length_of_protein': protein_tools.get_length_of_protein,
+    'count_aa': protein_tools.count_aa,
+    'get_fracture_of_aa': protein_tools.get_fracture_of_aa,
+}
+
+
 def run_dna_rna_tools(seqs: dict, command: str) -> dict:
     '''
     Runs dna_rna_tools on given dict of seqs with given command
@@ -96,3 +106,33 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
             passed_filtration_seqs[read_name] = seqs[read_name]
 
     return passed_filtration_seqs
+
+
+def run_ultimate_protein_tools(seqs: dict,
+                               command: str,
+                               **kwargs) -> dict:
+    """
+    Accepts command and runs it on input data with params
+
+    Arguments:
+    - seqs (str): Input in form of path, seq, seq list or seq dct
+    - command (str): Valid command from command_dct
+    - **kwargs to be passed to inner funcs
+
+    Return:
+    - output_dct (dict): dict where keys are number or name of seq and values are results of command run
+    """
+
+    output_dct = {}
+    for seq_name, seq in seqs.items():
+        if command in command_dct_prot:
+            if command == 'is_protein_valid':
+                output_dict |= {seq_name: protein_tools.is_protein_valid(seq)}
+            else:
+                if protein_tools.is_protein_valid(seq):
+                    output_dict |= {seq_name: 
+                                    command_dct_prot[command](seq, **kwargs)}
+
+    if len(output_dct) == 1:
+        return output_dct[list(output_dct.keys())[0]]
+    return output_dct
