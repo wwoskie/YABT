@@ -75,3 +75,37 @@ RNA_CODON_TABLE = {
   'ggc': 'g', 'gga': 'g', 'ggg': 'g'
 }
 
+
+def read_seq_from_fasta(path_to_seq: str,
+                        use_full_name: bool = False,
+                        **_) -> dict:
+    """
+    Reads sequences from fasta file and returns dictionary.
+
+    Arguments:
+    - path_to_seq (str): path to file
+
+    Return:
+    - dict: dict of sequences names as keys and sequences themselves as values {'seq_name': 'sequence',}
+    """
+
+    with open(path_to_seq) as f:
+        out_dct = {}
+        name = None # None is set to skip first ''.join(current_seqs) 
+        for line in f:
+            line = line.strip()
+            if line.startswith('>'):  # check for first line in seq
+                if not name is None:
+                    out_dct[name] = ''.join(current_seqs) # join current_seqs to str if not first seq_name
+                if use_full_name:  # check if user set full name in fasta
+                    name = line[1:]  # take whole fasta properties (e.g. if names not unique)
+                else:
+                    name = line[1:].split()[0]
+                current_seqs = [] # create list to append read lines to
+            else:
+                current_seqs.append(line)  # get value from dict (return '' if empty) and append str
+
+        out_dct[name] = ''.join(current_seqs) # collects last seqs to dict
+            
+    return out_dct
+
