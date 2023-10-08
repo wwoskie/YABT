@@ -252,7 +252,7 @@ def count_aa(seq: str, aminoacids_to_count: str = None) -> dict:
         aminoacids_to_count = set(seq)
     for aa in seq:
         if aa in aminoacids_to_count:
-            aa_dict_count.get(aa, 1) + 1 # return 1 if aa met first time, add 1 if not
+            aa_dict_count[aa] = aa_dict_count.get(aa, 0) + 1 # return 1 if aa met first time, add 1 if not
     return aa_dict_count
 
 def get_fracture_of_aa(seq: str, show_as_percentage: bool = False, aminoacids: str = None) -> dict:
