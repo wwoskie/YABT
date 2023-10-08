@@ -130,7 +130,9 @@ def run_ultimate_protein_tools(seqs: dict,
             if command == 'is_protein_valid':
                 output_dict |= {seq_name: protein_tools.is_protein_valid(seq)}
             else:
-                if protein_tools.is_protein_valid(seq):
+                if not protein_tools.is_protein_valid(seq):
+                    raise ValueError('Invalid protein')
+                else:
                     output_dict |= {seq_name: 
                                     command_dct_prot[command](seq, **kwargs)}
 
