@@ -13,8 +13,6 @@ def count_gc_content(seq: str) -> float:
     for letter in seq.upper(): # loop to avoid double-checking
         if letter in 'GC':
             gc_count += 1
-    if len(seq) == 0: # dodge zero division error to a more understandable one
-        raise ValueError('Cannnot work with sequence of length 0')
     gc_content = gc_count / len(seq) * 100 # len() is believed to be O(1)
     return gc_content
 
@@ -69,6 +67,7 @@ def count_mean_quality(quality_seq: str) -> float:
     '''
 
     q_score_lst = []
+
     for single_letter_quality in quality_seq:
         q_score = ord(single_letter_quality) - 33
         q_score_lst.append(q_score)
@@ -121,6 +120,9 @@ def run_fastq_tools(seqs: dict, # how can i make native type hint here?
     passed_filtration_seqs = {}
 
     for read_name, (read_seq, read_quality) in seqs.items(): # TODO add is_dna check
+        if len(read_seq) == 0: # dodge zero division error to a more understandable one
+            raise ValueError('Cannnot work with sequence of length 0')
+
         has_passed_filters = (
             check_if_in_bounds(count_gc_content(read_seq),
                                gc_bounds) # is in gc bounds
