@@ -101,4 +101,11 @@ def create_input_dict(*inp: str | list) -> dict:
     return parsed_dct
 
 
+command_dict = {
+    'check_seq_type': check_seq_type,
+    'reverse': reverse,
+    'complement': complement,
+    'reverse_transcribe': transcribe,
+    'transcribe': transcribe,
+}
 
