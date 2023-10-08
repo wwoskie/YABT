@@ -109,3 +109,22 @@ def read_seq_from_fasta(path_to_seq: str,
             
     return out_dct
 
+
+def get_sites_lengths(sites: list) -> dict:
+    """
+    Takes sites list and calculates their lengths. Used inside find_sites func
+
+    Arguments:
+    - sites (list): list of sites (str)
+
+    Return:
+    - dict: dict of sites length {'site': 'length',}
+    """
+
+    sites_length_dct = {}
+    for site in sites:
+        sites_length_dct[site] = len(site)
+    return sites_length_dct
+
+
+
