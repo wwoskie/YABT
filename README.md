@@ -4,7 +4,7 @@ This repository is the result of HW#5 on modules at Bioiformatics Institute.
 
 Primary goal of this homework was to conclude recieved knowledge on functions and modules.
 
-### Installation 
+## Installation 
 
 This tool can be installed via the following ways:
 - `git clone https://github.com/wwoskie/YABT.git` to either local path of your script (`.` directory) and import it directly with:
@@ -24,16 +24,16 @@ One can use any custom name for import but we suggest using `yabt` as module sho
 But don't limit yourself to only these two ways, as you can find more on modules as a whole [here](https://docs.python.org/3/tutorial/modules.html)
 
 
-### Quickstart
+## Quickstart
 
-1. General overview
+### 1. General overview
 
 YABT has three major functions available at `yabt` namespace which are:
 - `yabt.run_dna_rna_tools` - to process DNA and RNA seqs
 - `yabt.run_ultimate_protein_tools` - to process proteins
 - `yabt.yabt.run_fastq_tools` - to filter `fastq`-reads
 
-2. Input
+### 2. Input
 
 For these functions dictionary is the only supported input type. However, `yabt.yabt.run_fastq_tools` reqires slightly different input dictionary of format `{'seq_name': ('nucl_seq', 'quality_for_seq')}` while other two use `{'seq_name': 'seq'}` type of dictionary.
 
@@ -74,11 +74,11 @@ print(fasta_seqs)
 > {'crab_anapl': 'MDITIHNPLIRRPLFSWLAPSRIFDQIFGEHLQESELLPASPSLSPFLMRSPIFRMPSWLETGLSEMRLEKDKFSVNLDVKHFSPEELKVKVLGDMVEIHGKHEERQDEHGFIAREFNRKYRIPADVDPLTITSSLSLDGVLTVSAPRKQSDVPERSIPITREEKPAIAGAQRK', 'crab_bovin': 'MDIAIHHPWIRRPFFPFHSPSRLFDQFFGEHLLESDLFPASTSLSPFYLRPPSFLRAPSWIDTGLSEMRLEKDRFSVNLDVKHFSPEELKVKVLGDVIEVHGKHEERQDEHGFISREFHRKYRIPADVDPLAITSSLSSDGVLTVNGPRKQASGPERTIPITREEKPAVTAAPKK', 'crab_chick': 'MDITIHNPLVRRPLFSWLTPSRIFDQIFGEHLQESELLPTSPSLSPFLMRSPFFRMPSWLETGLSEMRLEKDKFSVNLDVKHFSPEELKVKVLGDMIEIHGKHEERQDEHGFIAREFSRKYRIPADVDPLTITSSLSLDGVLTVSAPRKQSDVPERSIPITREEKPAIAGSQRK', 'crab_human': 'MDIAIHHPWIRRPFFPFHSPSRLFDQFFGEHLLESDLFPTSTSLSPFYLRPPSFLRAPSWFDTGLSEMRLEKDRFSVNLDVKHFSPEELKVKVLGDVIEVHGKHEERQDEHGFISREFHRKYRIPADVDPLTITSSLSSDGVLTVNGPRKQVSGPERTIPITREEKPAVTAAPKK', 'crab_mesau': 'MDIAIHHPWIRRPFFPFHSPSRLFDQFFGEHLLESDLFSTATSLSPFYLRPPSFLRAPSWIDTGLSEMRMEKDRFSVNLDVKHFSPEELKVKVLGDVVEVHGKHEERQDEHGFISREFHRKYRIPADVDPLTITSSLSSDGVLTVNGPRKQASGPERTIPITREEKPAVTAAPKK', 'crab_mouse': 'MDIAIHHPWIRRPFFPFHSPSRLFDQFFGEHLLESDLFSTATSLSPFYLRPPSFLRAPSWIDTGLSEMRLEKDRFSVNLDVKHFSPEELKVKVLGDVIEVHGKHEERQDEHGFISREFHRKYRIPADVDPLAITSSLSSDGVLTVNGPRKQVSGPERTIPITREEKPAVAAAPKK', 'crab_rabit': 'MDIAIHHPWIRRPFFPFHSPSRLFDQFFGEHLLESDLFPTSTSLSPFYLRPPSFLRAPSWIDTGLSEMRLEKDRFSVNLDVKHFSPEELKVKVLGDVIEVHGKHEERQDEHGFISREFHRKYRIPADVDPLTITSSLSSDGVLTVNGPRKQAPGPERTIPITREEKPAVTAAPKK', 'crab_rat': 'MDIAIHHPWIRRPFFPFHSPSRLFDQFFGEHLLESDLFSTATSLSPFYLRPPSFLRAPSWIDTGLSEMRMEKDRFSVNLDVKHFSPEELKVKVLGDVIEVHGKHEERQDEHGFISREFHRKYRIPADVDPLTITSSLSSDGVLTVNGPRKQASGPERTIPITREEKPAVTAAPKK', 'crab_squac': 'MDIAIQHPWLRRPLFPSSIFPSRIFDQNFGEHFDPDLFPSFSSMLSPFYWRMGAPMARMPSWAQTGLSELRLDKDKFAIHLDVKHFTPEELRVKILGDFIEVQAQHEERQDEHGYVSREFHRKYKVPAGVDPLVITCSLSADGVLTITGPRKVADVPERSVPISRDEKPAVAGPQQK'}
 ```
 
-3. `yabt.run_dna_rna_tools` overview
+### 3. `yabt.run_dna_rna_tools` overview
 
 This module can perform the following operations on sequences:
 
-- `'check_seq_type'`
+## - `'check_seq_type'`
 
 Checks seq type (DNA, RNA or None). Returns str or None. Cases like ACG assumed to be DNA
 
@@ -104,7 +104,7 @@ print(yabt.run_dna_rna_tools(yabt.create_input_dict('I love Python'), 'check_seq
 > None
 ```
 
-- `'reverse'`
+## - `'reverse'`
 
 Reverses given seq. 
 
@@ -126,7 +126,7 @@ yabt.run_dna_rna_tools(yabt.create_input_dict('lol'), 'reverse')
 > ... ValueError: Can only work with DNA or RNA sequence
 ```
 
-- `'complement'`
+## - `'complement'`
 
 Complements given seq. Nucleic acid-type blind
 
@@ -145,7 +145,7 @@ yabt.run_dna_rna_tools(yabt.create_input_dict('ATGC', 'cuga'), 'complement')
 > {0: 'TACG', 1: 'gacu'}
 ```
 
-- `'transcribe'`
+## - `'transcribe'`
 
 Transcribes given DNA to RNA or reverse transcribes RNA to DNA. Nucleic acid-type blind
 
