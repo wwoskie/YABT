@@ -157,7 +157,6 @@ Transcribes given DNA to RNA or reverse transcribes RNA to DNA. Nucleic acid-typ
 
     Return:
     - str: Transcribed RNA seq
-    '''
 
 This function can perform not only transcription, but reverse-transcription too as it is nucleic acid-type blind.
 
@@ -343,3 +342,52 @@ yabt.run_ultimate_protein_tools(fasta_seqs, 'get_fracture_of_aa')['crab_rat']
 yabt.run_ultimate_protein_tools(fasta_seqs, 'get_fracture_of_aa', aminoacids_to_count='ML')['crab_rat']
 > {'M': 0.0171, 'L': 0.08}
 ```
+
+### 5. `'run_fastq_tools'` overview
+
+Runs fastq filtration by GC-content, length and quality procedure on input dict of format {'seq_name': ('nucl_seq','quality_for_seq')}
+
+    Arguments:
+    - seqs (dict): input dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
+    - gc_bounds (tuple | list | int | float): 
+        bounds for GC filtration, can process int, float, or tuple and list of length 2. Default is (0, 100) (not filtered by GC)
+    - length_bounds (tuple | list| int | float): 
+        bounds for length filtration, full analog of gc_bounds. 
+        Default is (0, 2**32)
+    - quality_threshold (int | float): 
+        quality threshold to check against. Default is 0
+
+    Return:
+    - passed_filtration_seqs (dict): 
+        dict of format {'seq_name': ('nucl_seq','quality_for_seq')} with filtered seqs
+
+All bounds intervals are included. Throws value error if empty read seq is passed (dodging 0-division error)
+
+Examples:
+```python
+EXAMPLE_FASTQ = {'seq_of_length_10_and_high_GC_and_low_quality': ('GGGGGCCCCC', '!!!!!!!!!!'), 
+    'seq_of_length_12_and_low_GC_and_high_quality': ('AAAAAAAAAAAA', 'IIIIIIIIIIII'), 
+    }  
+yabt.run_fastq_tools(EXAMPLE_FASTQ, length_bounds = (10, 12))
+> {'seq_of_length_10_and_high_GC_and_low_quality': ('GGGGGCCCCC', '!!!!!!!!!!'),
+ 'seq_of_length_12_and_low_GC_and_high_quality': ('AAAAAAAAAAAA',
+  'IIIIIIIIIIII')}
+yabt.run_fastq_tools(EXAMPLE_FASTQ, gc_bounds = 20)
+> {'seq_of_length_12_and_low_GC_and_high_quality': ('AAAAAAAAAAAA',
+  'IIIIIIIIIIII')}
+
+yabt.run_fastq_tools(EXAMPLE_FASTQ, gc_bounds = (80, 100))
+> 
+yabt.run_fastq_tools(EXAMPLE_FASTQ, gc_bounds = (80, 100))
+output
+{'seq_of_length_10_and_high_GC_and_low_quality': ('GGGGGCCCCC', '!!!!!!!!!!')}
+
+yabt.run_fastq_tools(EXAMPLE_FASTQ, quality_threshold = 40, gc_bounds = (80, 100))
+> {}
+yabt.run_fastq_tools({'seq_name': ('', '')}, quality_threshold = 40, gc_bounds = (80, 100))
+> ... ValueError: Cannnot work with sequence of length 0
+```
+
+## Troubleshooting
+
+This script throws some "a little" more understandable errors, however it's not fully covered. If you encounter error not provided by our team, please, make you've passed only nesessary parameters to function. However, if you've discovered a bug feel free to contact us on the "Issues" section of this repo. Also, if you want to contribute, you are welcome to make PRs with fixes and features.
