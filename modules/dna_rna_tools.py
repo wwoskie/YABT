@@ -122,14 +122,15 @@ def run_dna_rna_tools(seqs: dict, command: str) -> dict:
 
     output_dict = {}
 
-    for seq_name, seq in seqs.items(): 
+    for seq_name, seq in seqs.items():
         if command == 'check_seq_type': # user may want to check given seqs
             output_dict |= {seq_name: check_seq_type(seq)}
         else: # if other command
             nucl_type = check_seq_type(seq)
             if nucl_type is None:
                 raise ValueError('Can only work with DNA or RNA sequence')
-            elif command == 'complement':
+            
+            if command == 'complement':
                 output_dict |= {seq_name: complement(seq, nucl_type)}
             else:
                 output_dict |= {seq_name: command_dict[command](seq)}
