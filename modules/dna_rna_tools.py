@@ -80,3 +80,22 @@ def transcribe(seq: str) -> str:
         outseq.append(letter)
 
     return ''.join(outseq)
+
+
+def create_input_dict(*inp: str | list) -> dict:
+    """
+    Parses input seq or list of seqs and returns numerated dict of seqs.
+
+    Arguments:
+    - inp (str): Input seq or list of seqs
+
+    Return:
+    - parsed_dct (dict): numerated dict in format {0: 'seq'}
+    """
+
+    parsed_dct = {}
+    if isinstance(inp, tuple):
+        for i, seq in enumerate(inp):
+            parsed_dct |= {i: seq}
+
+    return parsed_dct
