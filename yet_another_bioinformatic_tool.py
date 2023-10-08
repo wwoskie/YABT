@@ -7,7 +7,7 @@ import modules.protein_tools as protein_tools
 import modules.fastq_tools as fastq_tools
 
 
-command_dict = {
+command_dict_nucl = {
     'check_seq_type': dna_rna_tools.check_seq_type,
     'reverse': dna_rna_tools.reverse,
     'complement': dna_rna_tools.complement,
