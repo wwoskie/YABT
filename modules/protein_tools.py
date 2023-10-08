@@ -260,7 +260,7 @@ def get_fracture_of_aa(seq: str,
     Arguments:
     - seq (str): sequence in which you need to calculate the fracture of amino acids
     - show_as_percentage (bool): change it to True, if you want to get results with percentages
-    - aminoacids (str): the fracture of which amino acids to count in the sequence
+    - aminoacids_to_count (str): the fracture of which amino acids to count in the sequence
 
     Return:
     - dict: a dictionary with amino acids and its fracture or percentage
