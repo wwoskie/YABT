@@ -101,17 +101,4 @@ def create_input_dict(*inp: str | list) -> dict:
     return parsed_dct
 
 
-rna_command_list = {
-    'reverse_transcribe': transcribe,
-}
 
-dna_command_list = {
-    'transcribe': transcribe,
-}
-
-nucl_blind_command_list = {
-    'check_seq_type': check_seq_type,
-    'reverse': reverse,
-    'complement': complement,
-
-}
