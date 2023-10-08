@@ -55,6 +55,7 @@ def complement(seq: str, nucl_type: str) -> str:
 
     Arguments:
     - seq (str): given sequence
+    - nucl_type (str): type of sequence
 
     Return:
     - srt: Complemented seq
