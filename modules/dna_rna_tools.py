@@ -40,3 +40,21 @@ def reverse(seq: str) -> str:
     - srt: Reversed seq
     '''
     return seq[::-1]
+
+
+def complement(seq: str, nucl_type: str) -> str:
+    '''
+    Complements given seq
+
+    Arguments:
+    - seq (str): given sequence
+
+    Return:
+    - srt: Complemented seq
+    '''
+    outseq = []
+    for letter in seq:
+        outseq.append(NUCL_COMP_DCT[nucl_type][letter])
+    return ''.join(outseq)
+
+
