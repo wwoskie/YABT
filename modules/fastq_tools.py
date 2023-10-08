@@ -70,3 +70,17 @@ def count_mean_quality(quality_seq: str) -> float:
         q_score_lst.append(q_score)
     mean_quality = sum(q_score_lst) / len(q_score_lst)
     return mean_quality
+
+def check_quality(mean_quality: float, quality_threshold: int | float) -> bool:
+    '''
+    Counts if mean read quality is greater or equal to quality_threshold
+
+    Arguments:
+    - mean_quality (float): mean quality
+    - quality_threshold (int | float): quality threshold to check against
+
+    Return:
+    - (bool): if mean_quality is greater or equal to quality_threshold
+    '''
+
+    return mean_quality >= quality_threshold
