@@ -4,6 +4,7 @@ from Bio import SeqIO
 from Bio import SeqUtils
 from numbers import Number
 from collections.abc import Iterable
+from abc import ABC, abstractmethod
 
 
 import modules.dna_rna_tools as dna_rna_tools
@@ -242,6 +243,26 @@ class FastQFilter:
 
     def __repr__(self):
         return f"FastQFilter(\n\tpath_to_input={self.path_to_input},\n\tpath_to_output={self.path_to_output}\n\tgc_bounds={self.gc_bounds},\n\tlength_bounds={self.length_bounds},\n\tquality_threshold={self.quality_threshold}\n)"
+
+
+class BiologicalSequence(str, ABC):  # Anton will bully me even more :(
+    """
+    Abstract base class representing a biological sequence.
+
+    This class defines the common interface for biological sequences, such as DNA, RNA, or protein sequences.
+    Subclasses should implement the `check_alphabet` method to verify whether the sequence's characters
+    belong to a specified alphabet.
+
+    Args:
+        str: The biological sequence as a string.
+
+    Attributes:
+        None
+    """
+
+    @abstractmethod
+    def check_alphabet(self, alphabet: Iterable | str) -> bool:
+        return set(self) in set(alphabet)
 
 
 def run_ultimate_protein_tools(seqs: dict, command: str, **kwargs) -> dict:
