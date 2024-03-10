@@ -4,119 +4,7 @@ from Bio import SeqIO
 from Bio import SeqUtils
 from numbers import Number
 from collections.abc import Iterable
-from abc import ABC, abstractmethod
-
-
-import modules.dna_rna_tools as dna_rna_tools
-import modules.protein_tools as protein_tools
-import modules.fastq_tools as fastq_tools
-from modules.dna_rna_tools import create_input_dict
-from modules.protein_tools import read_seq_from_fasta
-
-
-command_dict_nucl = {
-    "check_seq_type": dna_rna_tools.check_seq_type,
-    "reverse": dna_rna_tools.reverse,
-    "complement": dna_rna_tools.complement,
-    "transcribe": dna_rna_tools.transcribe,
-}
-
-
-command_dct_prot = {
-    "find_sites": protein_tools.find_sites,
-    "get_protein_rnas_number": protein_tools.get_protein_rnas_number,
-    "is_protein_valid": protein_tools.is_protein_valid,
-    "get_length_of_protein": protein_tools.get_length_of_protein,
-    "count_aa": protein_tools.count_aa,
-    "get_fracture_of_aa": protein_tools.get_fracture_of_aa,
-}
-
-
-def run_dna_rna_tools(seqs: dict, command: str) -> dict:
-    """
-    Runs dna_rna_tools on given dict of seqs with given command
-
-    Arguments:
-    - seqs (dict): Input dict of format {seq_name: 'seq'}
-
-    Return:
-    - output_dict (dict | str | bool):
-        dict of results of operations {seq_name: 'result'} or one operation result
-        if one sequence given
-    """
-
-    output_dict = {}
-
-    for seq_name, seq in seqs.items():
-        if command == "check_seq_type":  # user may want to check given seqs
-            output_dict |= {seq_name: dna_rna_tools.check_seq_type(seq)}
-        else:  # if other command
-            nucl_type = dna_rna_tools.check_seq_type(seq)
-            if nucl_type is None:
-                raise ValueError("Can only work with DNA or RNA sequence")
-
-            if command == "complement":
-                output_dict |= {seq_name: dna_rna_tools.complement(seq, nucl_type)}
-            else:
-                output_dict |= {seq_name: command_dict_nucl[command](seq)}
-
-    if len(output_dict) == 1:
-        return output_dict[list(output_dict.keys())[0]]
-    return output_dict
-
-
-def run_fastq_tools(
-    seqs: dict,  # how can i make native type hint here?
-    gc_bounds: tuple | list | int | float = (0, 100),
-    length_bounds: tuple | list | int | float = (0, 2**32),
-    quality_threshold: int | float = 0,
-) -> dict:
-    """
-    Runs fastq filtration by GC-content, length and quality procedure on input
-    dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
-
-    Arguments:
-    - seqs (dict): input dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
-    - gc_bounds (tuple | list | int | float):
-        bounds for GC filtration, can process int, float, or tuple and list of
-        length 2. Default is (0, 100) (not filtered by GC)
-    - length_bounds (tuple | list| int | float):
-        bounds for length filtration, full analog of gc_bounds.
-        Default is (0, 2**32)
-    - quality_threshold (int | float):
-        quality threshold to check against. Default is 0
-
-    Return:
-    - passed_filtration_seqs (dict):
-        dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')} with
-        filtered seqs
-    """
-
-    gc_bounds = fastq_tools.make_bounds(gc_bounds)
-    length_bounds = fastq_tools.make_bounds(length_bounds)  # make tuple-like bounds
-
-    passed_filtration_seqs = {}
-
-    for read_name, (read_seq, read_quality) in seqs.items():
-        if len(read_seq) == 0:  # dodge zero division error to a more understandable one
-            raise ValueError("Cannnot work with sequence of length 0")
-
-        has_passed_filters = (
-            fastq_tools.check_if_in_bounds(
-                fastq_tools.count_gc_content(read_seq), gc_bounds
-            )  # is in gc bounds
-            and fastq_tools.check_if_in_bounds(
-                len(read_seq), length_bounds
-            )  # in length bounds
-            and fastq_tools.check_mean_quality(
-                fastq_tools.count_mean_quality(read_quality), quality_threshold
-            )  # quality greater than
-        )
-
-        if has_passed_filters:  # how can i avoid copy here?
-            passed_filtration_seqs[read_name] = seqs[read_name]
-
-    return passed_filtration_seqs
+from abc import ABC, abstractmethod, abstractproperty
 
 
 class FastQFilter:
@@ -143,11 +31,6 @@ class FastQFilter:
 
     Methods:
         filter(): Filters the input FASTQ file based on specified criteria.
-
-    Private Methods:
-        _make_bounds(bounds) -> tuple: Converts bounds to a valid tuple format.
-        _uniquify_path(path) -> str: Generates a unique output path.
-        _is_in_bounds(value: Number, bounds: tuple) -> bool: Checks if a value is within bounds.
     """
 
     def __init__(
@@ -260,36 +143,137 @@ class BiologicalSequence(str, ABC):  # Anton will bully me even more :(
         None
     """
 
+    @property
     @abstractmethod
-    def check_alphabet(self, alphabet: Iterable | str) -> bool:
-        return set(self) in set(alphabet)
+    def alphabet(self) -> set:
+        return set(self)
+
+    def check_alphabet(self, alphabet: Iterable) -> bool:
+        return self.alphabet.issubset(set(alphabet))
 
 
-def run_ultimate_protein_tools(seqs: dict, command: str, **kwargs) -> dict:
-    """
-    Accepts command and runs it on input data with params
+class NucleicAcidSequence(BiologicalSequence):
+    @abstractmethod
+    def _comp_dct(self):
+        pass
 
-    Arguments:
-    - seqs (str): Input in form of path, seq, seq list or seq dct
-    - command (str): Valid command from command_dct
-    - **kwargs to be passed to inner funcs
+    @abstractmethod
+    def alphabet(self):
+        pass
 
-    Return:
-    - output_dct (dict):
-        dict where keys are number or name of seq and values are results of command run
-    """
+    def complement(self):
+        if not issubclass(self.__class__.__bases__[0], NucleicAcidSequence):
+            raise NotImplementedError(
+                "This method is not implemented for NucleicAcidSequence class"
+            )
+        return "".join([self._comp_dct[letter] for letter in self])
 
-    output_dict = {}
-    for seq_name, seq in seqs.items():
-        if command in command_dct_prot:
-            if command == "is_protein_valid":
-                output_dict |= {seq_name: protein_tools.is_protein_valid(seq)}
+    @property
+    def gc_content(self):
+        if not issubclass(self.__class__.__bases__[0], NucleicAcidSequence):
+            raise NotImplementedError(
+                "This method is not implemented for NucleicAcidSequence class"
+            )
+        gc_count = 0
+        for letter in self:
+            if letter.lower() == "g" or letter.lower == "c":
+                gc_count += 1
+                return gc_count / len(self)
+
+
+class DNASequence(NucleicAcidSequence):
+    @property
+    def _trans_dct(self):
+        return {"T": "U", "u": "t"}
+
+    @property
+    def _comp_dct(self):
+        return {
+            "G": "C",
+            "C": "G",
+            "g": "c",
+            "c": "g",
+        } | {"A": "T", "T": "A", "a": "t", "t": "a"}
+
+    def transcribe(self):
+        return "".join(
+            [
+                self._trans_dct[letter] if letter in self._trans_dct else letter
+                for letter in self
+            ]
+        )
+
+
+class RNASequence(NucleicAcidSequence):
+    @property
+    def _comp_dct(self):
+        return {
+            "G": "C",
+            "C": "G",
+            "g": "c",
+            "c": "g",
+        } | {"A": "U", "U": "A", "a": "u", "u": "a"}
+
+
+class AminoAcidSequence(BiologicalSequence):
+
+    _alphabet = [
+        "F",
+        "L",
+        "S",
+        "Y",
+        "C",
+        "W",
+        "P",
+        "H",
+        "Q",
+        "R",
+        "I",
+        "M",
+        "T",
+        "N",
+        "K",
+        "V",
+        "A",
+        "D",
+        "E",
+        "G",
+        "U",
+        "O",
+        "f",
+        "l",
+        "s",
+        "y",
+        "c",
+        "w",
+        "p",
+        "h",
+        "q",
+        "r",
+        "i",
+        "m",
+        "t",
+        "n",
+        "k",
+        "v",
+        "a",
+        "d",
+        "e",
+        "g",
+        "u",
+        "o",
+    ]
+
+    @property
+    def alphabet(self):
+        return set(_alphabet)
+
+    def count_aa(self):
+        aa_counts = {}
+        for aa in self:
+            if aa not in aa_counts:
+                aa_counts[aa] = 1
             else:
-                if protein_tools.is_protein_valid(seq):
-                    output_dict |= {seq_name: command_dct_prot[command](seq, **kwargs)}
-                else:
-                    raise ValueError(f"Invalid protein, name/number: {seq_name}")
+                aa_counts[aa] += 1
 
-    if len(output_dict) == 1:
-        return output_dict[list(output_dict.keys())[0]]
-    return output_dict
+        return aa_counts
