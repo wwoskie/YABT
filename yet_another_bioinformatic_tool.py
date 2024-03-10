@@ -151,8 +151,10 @@ class BiologicalSequence(str, ABC):  # Anton will bully me even more :(
     def alphabet(self) -> set:
         pass
 
-    def check_alphabet(self, alphabet: Iterable) -> bool:
-        return self.alphabet.issubset(set(alphabet))
+    def check_alphabet(self, alphabet: Iterable = None) -> bool:
+        if alphabet is None:
+            alphabet = self.alphabet
+        return set(self).issubset(set(alphabet))
 
 
 class NucleicAcidSequence(BiologicalSequence):
@@ -206,19 +208,19 @@ class NucleicAcidSequence(BiologicalSequence):
             )
         return set(self._comp_dct)
 
-    def complement(self) -> str:
+    def complement(self):  # -> self.__class__: # how to annotate it right?
         """
         Returns the complement of the nucleic acid sequence using the provided dictionary `_comp_dct`.
 
         Returns:
-            str: The complement sequence.
+            self.__class__: The complement sequence.
         """
 
         if not issubclass(self.__class__.__bases__[0], NucleicAcidSequence):
             raise NotImplementedError(
                 "This method is not implemented for NucleicAcidSequence class"
             )
-        return "".join([self._comp_dct[letter] for letter in self])
+        return self.__class__("".join([self._comp_dct[letter] for letter in self]))
 
     @property
     def gc_content(self) -> float:
@@ -292,12 +294,17 @@ class DNASequence(NucleicAcidSequence):
             str: The transcribed RNA sequence.
         """
 
-        return "".join(
-            [
-                self._trans_dct[letter] if letter in self._trans_dct else letter
-                for letter in self
-            ]
+        return RNASequence(
+            "".join(
+                [
+                    self._trans_dct[letter] if letter in self._trans_dct else letter
+                    for letter in self
+                ]
+            )
         )
+
+    def __repr__(self):
+        return f"DNASequence('{self}')"
 
 
 class RNASequence(NucleicAcidSequence):
@@ -324,6 +331,9 @@ class RNASequence(NucleicAcidSequence):
             "g": "c",
             "c": "g",
         } | {"A": "U", "U": "A", "a": "u", "u": "a"}
+
+    def __repr__(self):
+        return f"RNASequence('{self}')"
 
 
 class AminoAcidSequence(BiologicalSequence):
@@ -392,7 +402,7 @@ class AminoAcidSequence(BiologicalSequence):
 
     @property
     def alphabet(self) -> set:
-        return set(_alphabet)
+        return set(self._alphabet)
 
     def count_aa(self) -> dict:
         aa_counts = {}
@@ -403,3 +413,6 @@ class AminoAcidSequence(BiologicalSequence):
                 aa_counts[aa] += 1
 
         return aa_counts
+
+    def __repr__(self):
+        return f"AminoAcidSequence('{self}')"
