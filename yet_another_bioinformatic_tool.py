@@ -2,8 +2,9 @@ import os
 
 from Bio import SeqIO
 from Bio import SeqUtils
+from collections import defaultdict
 from numbers import Number
-from collections.abc import Iterable
+from typing import Iterable, Self
 from abc import ABC, abstractmethod, abstractproperty
 
 
@@ -15,9 +16,9 @@ class FastQFilter:
         path_to_input (str): Path to the input FASTQ file.
         path_to_output (str, optional): Path to the output filtered FASTQ file. If not provided,
             a unique output path will be generated based on the input file name.
-        gc_bounds (Iterable[Number, Number] | Number, optional): GC content bounds for filtering.
+        gc_bounds (Iterable[Number] | Number, optional): GC content bounds for filtering.
             Can be a single value or a tuple representing the lower and upper bounds (default: (0, 100)).
-        length_bounds (Iterable[Number, Number] | Number, optional): Read length bounds for filtering.
+        length_bounds (Iterable[Number] | Number, optional): Read length bounds for filtering.
             Can be a single value or a tuple representing the lower and upper bounds (default: (0, 2**32)).
         quality_threshold (Number, optional): Minimum average quality score threshold for filtering
             (default: 0).
@@ -37,8 +38,8 @@ class FastQFilter:
         self,
         path_to_input: str,
         path_to_output: str = None,
-        gc_bounds: Iterable[Number, Number] | Number = (0, 100),
-        length_bounds: Iterable[Number, Number] | Number = (0, 2**32),
+        gc_bounds: Iterable[Number] | Number = (0, 100),
+        length_bounds: Iterable[Number] | Number = (0, 2**32),
         quality_threshold: Number = 0,
     ) -> None:
         self.path_to_input = path_to_input
@@ -67,7 +68,8 @@ class FastQFilter:
                 and self._is_in_bounds(len(read), self.length_bounds)
             ):
                 reads_that_passed_filtration.append(read)
-            SeqIO.write(reads_that_passed_filtration, self.path_to_output, "fastq")
+            SeqIO.write(reads_that_passed_filtration,
+                        self.path_to_output, "fastq")
 
     def _make_bounds(self, bounds) -> tuple:
         """
@@ -125,7 +127,13 @@ class FastQFilter:
         return bounds[0] <= value <= bounds[1]
 
     def __repr__(self):
-        return f"FastQFilter(\n\tpath_to_input={self.path_to_input},\n\tpath_to_output={self.path_to_output}\n\tgc_bounds={self.gc_bounds},\n\tlength_bounds={self.length_bounds},\n\tquality_threshold={self.quality_threshold}\n)"
+        return (
+            f"FastQFilter(\n\tpath_to_input={self.path_to_input},"
+            + "\n\tpath_to_output={self.path_to_output}"
+            + "\n\tgc_bounds={self.gc_bounds},"
+            + "\n\tlength_bounds={self.length_bounds},"
+            + "\n\tquality_threshold={self.quality_threshold}\n)"
+        )
 
 
 class BiologicalSequence(str, ABC):  # Anton will bully me even more :(
@@ -202,21 +210,21 @@ class NucleicAcidSequence(BiologicalSequence):
             set: The alphabet of the sequence.
         """
 
-        if not issubclass(self.__class__.__bases__[0], NucleicAcidSequence):
+        if not not issubclass(type(self), NucleicAcidSequence):
             raise NotImplementedError(
                 "This method is not implemented for NucleicAcidSequence class"
             )
         return set(self._comp_dct)
 
-    def complement(self):  # -> self.__class__: # how to annotate it right?
+    def complement(self: Self) -> Self:
         """
         Returns the complement of the nucleic acid sequence using the provided dictionary `_comp_dct`.
 
         Returns:
-            self.__class__: The complement sequence.
+            Self: The complement sequence.
         """
 
-        if not issubclass(self.__class__.__bases__[0], NucleicAcidSequence):
+        if not issubclass(type(self), NucleicAcidSequence):
             raise NotImplementedError(
                 "This method is not implemented for NucleicAcidSequence class"
             )
@@ -231,7 +239,7 @@ class NucleicAcidSequence(BiologicalSequence):
             float: The GC content as a percentage.
         """
 
-        if not issubclass(self.__class__.__bases__[0], NucleicAcidSequence):
+        if not not issubclass(type(self), NucleicAcidSequence):
             raise NotImplementedError(
                 "This method is not implemented for NucleicAcidSequence class"
             )
@@ -239,7 +247,7 @@ class NucleicAcidSequence(BiologicalSequence):
         for letter in self:
             if letter.lower() == "g" or letter.lower == "c":
                 gc_count += 1
-                return gc_count / len(self)
+        return gc_count / len(self)
 
 
 class DNASequence(NucleicAcidSequence):
@@ -349,68 +357,21 @@ class AminoAcidSequence(BiologicalSequence):
         alphabet (set): The set of valid amino acid symbols.
 
     Methods:
-        count_aa() -> dict:
+        count_aa() -> defaultdict:
             Counts the occurrences of each amino acid in the sequence.
     """
-
-    _alphabet = [
-        "F",
-        "L",
-        "S",
-        "Y",
-        "C",
-        "W",
-        "P",
-        "H",
-        "Q",
-        "R",
-        "I",
-        "M",
-        "T",
-        "N",
-        "K",
-        "V",
-        "A",
-        "D",
-        "E",
-        "G",
-        "U",
-        "O",
-        "f",
-        "l",
-        "s",
-        "y",
-        "c",
-        "w",
-        "p",
-        "h",
-        "q",
-        "r",
-        "i",
-        "m",
-        "t",
-        "n",
-        "k",
-        "v",
-        "a",
-        "d",
-        "e",
-        "g",
-        "u",
-        "o",
-    ]
+    __alphabet_cap = "FLSYCWPHQRIMTNKVADEGUO"
+    _alphabet = __alphabet_cap + __alphabet_cap.lower()
 
     @property
     def alphabet(self) -> set:
         return set(self._alphabet)
 
-    def count_aa(self) -> dict:
-        aa_counts = {}
+    def count_aa(self) -> defaultdict:
+        aa_counts = defaultdict(int)
+
         for aa in self:
-            if aa not in aa_counts:
-                aa_counts[aa] = 1
-            else:
-                aa_counts[aa] += 1
+            aa_counts[aa] += 1
 
         return aa_counts
 
