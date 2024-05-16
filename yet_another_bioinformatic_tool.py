@@ -1,11 +1,21 @@
 import os
+import functools
+import sys
+import re
+import requests
+import warnings
 
-from Bio import SeqIO
-from Bio import SeqUtils
-from collections import defaultdict
-from numbers import Number
-from typing import Iterable, Self
 from abc import ABC, abstractmethod, abstractproperty
+from Bio import SeqIO, SeqUtils
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from io import StringIO
+from numbers import Number
+from typing import Callable, Dict, Iterable, List, Self
+
+TG_API_TOKEN = os.getenv("TG_API_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 
 class FastQFilter:
@@ -68,8 +78,7 @@ class FastQFilter:
                 and self._is_in_bounds(len(read), self.length_bounds)
             ):
                 reads_that_passed_filtration.append(read)
-            SeqIO.write(reads_that_passed_filtration,
-                        self.path_to_output, "fastq")
+            SeqIO.write(reads_that_passed_filtration, self.path_to_output, "fastq")
 
     def _make_bounds(self, bounds) -> tuple:
         """
@@ -360,6 +369,7 @@ class AminoAcidSequence(BiologicalSequence):
         count_aa() -> defaultdict:
             Counts the occurrences of each amino acid in the sequence.
     """
+
     __alphabet_cap = "FLSYCWPHQRIMTNKVADEGUO"
     _alphabet = __alphabet_cap + __alphabet_cap.lower()
 
@@ -377,3 +387,157 @@ class AminoAcidSequence(BiologicalSequence):
 
     def __repr__(self):
         return f"AminoAcidSequence('{self}')"
+
+
+def run_genscan(
+    sequence: str = None,
+    sequence_file: str = None,
+    organism: str = "Vertebrate",
+    exon_cutoff: float = 1.00,
+    sequence_name: str = "",
+) -> GenscanOutput:
+    """
+    API to access GENSCAN online tool
+
+    Args:
+        sequence (str): The input DNA sequence to be analyzed by GENSCAN.
+        sequence_file (str): The path to a file containing the input DNA sequence in fasta format.
+        organism (str): The type of organism for which gene prediction is performed. Available organisms are: 'Arabidopsis', 'Maize', 'Vertebrate' (default is 'Vertebrate').
+        exon_cutoff (float): The cutoff value for exons predicted by GENSCAN (default is 1.00).
+        sequence_name (str): The name of the input sequence.
+
+    Returns:
+        GenscanOutput: An instance of the GenscanOutput class containing the output data from the GENSCAN prediction.
+    """
+
+    url = "http://argonaute.mit.edu/cgi-bin/genscanw_py.cgi"
+
+    if organism not in {"Arabidopsis", "Maize", "Vertebrate"}:
+        raise ValueError(
+            "Organism not available. Choose one from the list: 'Arabidopsis', 'Maize', 'Vertebrate'"
+        )
+
+    if sequence_file is not None:
+        with open(f"{sequence_file}") as f:
+            file = f.read()
+    else:
+        file = None
+
+    if sequence is not None and sequence_file is not None:
+        warnings.warn(
+            "You've passed both sequence file and sequence string, sequence string will be used",
+            UserWarning,
+        )
+
+    data = {
+        "-o": organism,
+        "-e": exon_cutoff,
+        "-n": sequence_name,
+        "-p": "Predicted peptides only",
+        "-u": file,
+        "-s": sequence,
+    }
+
+    p = requests.post(url=url, data=data)
+
+    output = p.text.split("<pre>")[1].split("</pre>")[0]
+
+    output_list = list(
+        filter(
+            None,
+            re.split(
+                "fasta : | bp|Predicted genes/exons:"
+                + "|Suboptimal exons with probability|"
+                + f"Exnum|Predicted peptide sequence{re.escape('(s):')}",
+                output,
+            ),
+        )
+    )
+
+    status = p.status_code
+
+    exon_dict = process_table(output_list[3].strip().split("\n\n\n\n")[1:])
+
+    suboptimal_exon_dict = process_table(output_list[5].strip().split("\n\n\n\n")[1:])
+
+    exon_dict |= suboptimal_exon_dict
+
+    intron_dict = compute_introns(exon_dict)
+
+    cds_list = process_proteins(output_list[6].strip())
+
+    output_dict = {
+        "status": status,
+        "sequence_name": sequence_name,
+        "exon_dict": exon_dict,
+        "intron_dict": intron_dict,
+        "cds_dict": cds_list,
+    }
+
+    return GenscanOutput(**output_dict)
+
+
+def telegram_logger(chat_id: int) -> Callable:
+    """
+    Decorator that logs the execution of another function and sends the log (if available) to a specified Telegram chat. It takes a chat_id as input and returns a Callable.
+
+    Args:
+        chat_id (int): The chat id of the Telegram user where the log will be sent.
+
+    Returns:
+        Callable: A decorator function that can be used to log the execution of other functions.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+
+            output = None
+
+            try:
+                start_time = datetime.now()
+
+                with Capturing() as captured:
+                    output = func(*args, **kwargs)
+
+                end_time = datetime.now()
+
+                delta = end_time - start_time
+                # delta = delta + timedelta(days=10000)
+
+                text = (
+                    f"😎👍💅🏼\nFunction `{func.__name__}` "
+                    + f"successfully executed in `{delta}`"
+                )
+
+            except Exception as e:
+                text = (
+                    f"😳😢🤔\nFunction `{func.__name__}` "
+                    + f"failed with an exception:\n\n `{type(e).__name__}: {e}`"
+                )
+
+            finally:
+                token = TG_API_TOKEN
+
+                base_url = "https://api.telegram.org/bot" + token
+
+                if len(captured.getvalue()) > 0:
+
+                    p = requests.post(
+                        url=base_url + "/sendDocument",
+                        data={"chat_id": chat_id},
+                        files={
+                            "document": (f"{func.__name__}.log", captured.getvalue())
+                        },
+                    )
+
+                r = requests.get(
+                    url=base_url + "/sendMessage",
+                    params={"chat_id": chat_id, "text": text, "parse_mode": "markdown"},
+                )
+
+            return output
+
+        return wrapper
+
+    return decorator
