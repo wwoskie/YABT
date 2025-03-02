@@ -1,5 +1,7 @@
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Self
 
 from Bio import SeqIO, SeqUtils
 from Bio.SeqRecord import SeqRecord
@@ -163,3 +165,155 @@ class FastQFiltrator:
             + f"\n\tlength_bounds={self.length_bounds},"
             + f"\n\tquality_threshold={self.quality_threshold}\n)"
         )
+
+
+class BiologicalSequence(str, ABC):
+    """
+    Abstract base class representing a biological sequence.
+
+    Attributes
+    ----------
+    alphabet : set
+        The set of valid characters in the sequence.
+
+    Methods
+    -------
+    check_alphabet(alphabet: Iterable = None) -> bool
+        Checks if the sequence characters are within the given alphabet.
+    """
+
+    @property
+    @abstractmethod
+    def alphabet(self) -> set[str]:
+        pass
+
+    def check_alphabet(self, alphabet: Iterable[str] | None = None) -> bool:
+        if alphabet is None:
+            alphabet = self.alphabet
+        return set(self).issubset(set(alphabet))
+
+
+class NucleicAcidSequence(BiologicalSequence):
+    """
+    Abstract base class representing a nucleic acid sequence.
+
+    Methods
+    -------
+    complement() -> Self
+        Returns the complement of the sequence.
+    gc_content() -> float
+        Calculates the GC content of the sequence.
+    """
+
+    @abstractmethod
+    def _comp_dct(self) -> None:
+        self._check_implementation()
+        pass
+
+    @property
+    def alphabet(self) -> set[str]:
+        self._check_implementation()
+        return set(self._comp_dct)
+
+    def complement(self: Self) -> Self:
+        self._check_implementation()
+        return self.__class__("".join([self._comp_dct[letter] for letter in self]))
+
+    @property
+    def gc_content(self) -> float:
+        self._check_implementation()
+        gc_count = 0
+        for letter in self:
+            if letter.lower() == "g" or letter.lower == "c":
+                gc_count += 1
+        return gc_count / len(self)
+
+    def _check_implementation(self) -> None:
+        if type(self).__name__ == "NucleicAcidSequence":
+            raise NotImplementedError(
+                "This method is not implemented for 'NucleicAcidSequence'"
+            )
+
+
+class DNASequence(NucleicAcidSequence):
+    """
+    Class representing a DNA sequence.
+
+    Methods
+    -------
+    transcribe() -> RNASequence
+        Transcribes the DNA sequence into an RNA sequence.
+    """
+
+    @property
+    def _trans_dct(self) -> dict:
+        return {"T": "U", "u": "t"}
+
+    @property
+    def _comp_dct(self) -> dict:
+        return {
+            "G": "C",
+            "C": "G",
+            "g": "c",
+            "c": "g",
+        } | {"A": "T", "T": "A", "a": "t", "t": "a"}
+
+    def transcribe(self) -> str:
+        return RNASequence(
+            "".join(
+                [
+                    self._trans_dct[letter] if letter in self._trans_dct else letter
+                    for letter in self
+                ]
+            )
+        )
+
+    def __repr__(self):
+        return f"DNASequence('{self}')"
+
+
+class RNASequence(NucleicAcidSequence):
+    """
+    Class representing an RNA sequence.
+    """
+
+    @property
+    def _comp_dct(self) -> dict:
+        return {
+            "G": "C",
+            "C": "G",
+            "g": "c",
+            "c": "g",
+        } | {"A": "U", "U": "A", "a": "u", "u": "a"}
+
+    def __repr__(self):
+        return f"RNASequence('{self}')"
+
+
+class AminoAcidSequence(BiologicalSequence):
+    """
+    Class representing an amino acid sequence.
+
+    Methods
+    -------
+    count_aa() -> defaultdict
+        Counts the occurrences of each amino acid in the sequence.
+    """
+
+    __alphabet_cap = "FLSYCWPHQRIMTNKVADEGUO"
+    _alphabet = __alphabet_cap + __alphabet_cap.lower()
+
+    @property
+    def alphabet(self) -> set:
+        return set(self._alphabet)
+
+    def count_aa(self) -> defaultdict:
+        aa_counts = defaultdict(int)
+
+        for aa in self:
+            aa_counts[aa] += 1
+
+        return aa_counts
+
+    def __repr__(self):
+        return f"AminoAcidSequence('{self}')"
