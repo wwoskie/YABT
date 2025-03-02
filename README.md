@@ -16,7 +16,12 @@ sys.path.append('/path/to/yet_another_bioinformatic_tool.py')
 ```
 Import package classes via:
 ```python 
-from yet_another_bioinformatic_tool import FastQFilter, BiologicalSequence, NucleicAcidSequence, DNASequence, RNASequence, AminoAcidSequence
+from yet_another_bioinformatic_tool import (
+    AminoAcidSequence,
+    DNASequence,
+    FastQFiltrator,
+    NucleicAcidSequence,
+)
 ```
 
 One can use any custom name for import but we suggest using `yabt` as module shortname.
