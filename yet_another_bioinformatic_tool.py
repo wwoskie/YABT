@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Iterator, Self
 
 from Bio import SeqIO, SeqUtils
 from Bio.SeqRecord import SeqRecord
+
+from logger import setup_class_logger
 
 
 class FastQFiltrator:
@@ -20,11 +23,11 @@ class FastQFiltrator:
         An iterable or iterator of SeqRecord objects representing the reads.
         If provided, reads will be taken directly from this iterable.
         Default is None.
-    gc_bounds : tuple[float, float] | float, optional
+    gc_bounds : Iterable[float, float] | float, optional
         The GC content bounds for filtering. Can be a tuple (lower_bound, upper_bound)
         or a single float representing the upper bound (lower bound defaults to 0).
-        Default is (0, 100).
-    length_bounds : tuple[int, int] | int, optional
+        Default is (0, 1).
+    length_bounds : Iterable[int, int] | int, optional
         The length bounds for filtering. Can be a tuple (lower_bound, upper_bound)
         or a single integer representing the upper bound (lower bound defaults to 0).
         Default is (0, 2**32).
@@ -51,16 +54,34 @@ class FastQFiltrator:
     def __init__(
         self,
         path_to_input: Path | str | None = None,
-        reads: Iterable[SeqRecord] | Iterator[SeqRecord] | None = None,
-        gc_bounds: tuple[float, float] | float = (0, 100),
+        reads: list[SeqRecord]
+        | Iterable[SeqRecord]
+        | Iterator[SeqRecord]
+        | None = None,
+        gc_bounds: tuple[float, float] | float = (0, 1),
         length_bounds: tuple[int, int] | int = (0, 2**32),
         quality_threshold: float = 0,
+        logs_dir: Path | str = "",
     ) -> None:
         # Handle read inputs: read from path or take reads
+        # Setup logging
+        self.logs_dir = logs_dir
+        self.logger = setup_class_logger(
+            self.__class__.__name__,
+            verbosity_console=2,
+            verbosiy_file=2,
+            log_file=Path(
+                self.logs_dir,
+                f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{self.__class__.__name__}.log",
+            ),
+        )
+
         self.path_to_input = path_to_input
         if isinstance(self.path_to_input, (Path, str)):
-            self._read_fastq(self.path_to_input)
+            self.reads = self._read_fastq(self.path_to_input)
         elif isinstance(reads, (Iterable, Iterator)) and self.path_to_input is None:
+            self.reads = list(reads)
+        elif isinstance(reads, list) and self.path_to_input is None:
             self.reads = reads
         else:
             raise ValueError(
@@ -69,13 +90,23 @@ class FastQFiltrator:
             )
 
         # Define thresholds
-        self.gc_bounds = self._make_bounds(gc_bounds)
-        self.length_bounds = self._make_bounds(length_bounds)
+        try:
+            self.gc_bounds = self._make_bounds(gc_bounds)
+        except TypeError as e:
+            self.logger.error(e, stack_info=True, exc_info=True)
+
+        try:
+            self.length_bounds = self._make_bounds(length_bounds)
+        except TypeError as e:
+            self.logger.error(e, stack_info=True, exc_info=True)
+
         self.quality_threshold = quality_threshold
+
+        self.logger.info(f"Starting fastq filtering: {self}")
 
     def filter_fastq(self) -> None:
         """Filters the reads based on the specified GC content, length, and quality thresholds"""
-
+        self.logger.info("Filtering fastq...")
         reads_that_passed_filtration = []
         for read in self.reads:
             if self._passed_filter(read):
@@ -98,6 +129,7 @@ class FastQFiltrator:
             If False, a unique file name will be generated to avoid overwriting.
             Default is False.
         """
+        self.logger.info("Writing fastq to file...")
         if path_to_output is not None:
             SeqIO.write(
                 self.reads, self._uniquify_path(path_to_output, rewrite), "fastq"
@@ -120,12 +152,12 @@ class FastQFiltrator:
             and self._is_in_bounds(len(read), self.length_bounds)
         )
 
-    def _read_fastq(self, path_to_input: Path | str) -> None:
-        iterator: Iterator[SeqRecord] = SeqIO.parse(path_to_input, "fastq")
-        self.reads = iterator
+    def _read_fastq(self, path_to_input: Path | str) -> list:
+        iterator: Iterator[SeqRecord] = list(SeqIO.parse(path_to_input, "fastq"))
+        return iterator
 
     def _make_bounds(self, bounds: tuple[float, float] | float) -> tuple[float, float]:
-        if not (isinstance(bounds, tuple) and len(bounds) == 2) and not isinstance(
+        if not (isinstance(bounds, Iterable) and len(bounds) == 2) and not isinstance(
             bounds, float
         ):
             raise TypeError(f"Cannot work with {type(bounds).__name__} type")
@@ -152,18 +184,18 @@ class FastQFiltrator:
 
     def __str__(self) -> str:
         return (
-            "FastQFilter("
-            + f"\n\tgc_bounds={self.gc_bounds},"
-            + f"\n\tlength_bounds={self.length_bounds},"
-            + f"\n\tquality_threshold={self.quality_threshold}\n)"
+            f"FastQFiltrator(path_to_input='{self.path_to_input}',"
+            + f" gc_bounds={self.gc_bounds},"
+            + f" length_bounds={self.length_bounds},"
+            + f" quality_threshold={self.quality_threshold})"
         )
 
     def __repr__(self) -> str:
         return (
-            f"FastQFilter(\n\tpath_to_input='{self.path_to_input}',"
-            + f"\n\tgc_bounds={self.gc_bounds},"
-            + f"\n\tlength_bounds={self.length_bounds},"
-            + f"\n\tquality_threshold={self.quality_threshold}\n)"
+            f"FastQFiltrator(path_to_input='{self.path_to_input}',"
+            + f" gc_bounds={self.gc_bounds},"
+            + f" length_bounds={self.length_bounds},"
+            + f" quality_threshold={self.quality_threshold})"
         )
 
 
