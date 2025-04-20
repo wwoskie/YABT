@@ -62,22 +62,40 @@ class FastQFiltrator:
         length_bounds: tuple[int, int] | int = (0, 2**32),
         quality_threshold: float = 0,
         logs_dir: Path | str = "",
+        log_file: Path | str = "auto",
+        disable_logging: bool = False,
     ) -> None:
         # Handle read inputs: read from path or take reads
         # Setup logging
-        self.logs_dir = logs_dir
+        if log_file == "auto":
+            log_file = f"{datetime.now().strftime('%Y%m%d-%H%M%S-%f')[:-3]}-{self.__class__.__name__}.log"
+
+        if logs_dir is not None and log_file is not None:
+            log_file = Path(
+                logs_dir,
+                log_file,
+            )
+        else:
+            log_file = None
+
+        if disable_logging:
+            log_file = None
+
         self.logger = setup_class_logger(
             self.__class__.__name__,
             verbosity_console=2,
             verbosiy_file=2,
-            log_file=Path(
-                self.logs_dir,
-                f"{datetime.now().strftime('%Y%m%d-%H%M%S-%f')[:-3]}-{self.__class__.__name__}.log",
-            ),
+            log_file=log_file,
         )
 
         self.path_to_input = path_to_input
-        if isinstance(self.path_to_input, (Path, str)):
+        if isinstance(self.path_to_input, (Path, str)) and (
+            isinstance(reads, list) or isinstance(reads, (Iterable, Iterator))
+        ):
+            raise ValueError(
+                "Reads should either be path or reads iterator/list, not both"
+            )
+        elif isinstance(self.path_to_input, (Path, str)):
             self.reads = self._read_fastq(self.path_to_input)
         elif isinstance(reads, (Iterable, Iterator)) and self.path_to_input is None:
             self.reads = list(reads)
@@ -85,7 +103,7 @@ class FastQFiltrator:
             self.reads = reads
         else:
             raise ValueError(
-                "Reads should be either be: iterable or iterator of reads,"
+                "Reads should be either be: list of reads,"
                 + f" but {type(reads).__name__} was given!"
             )
 
@@ -94,11 +112,13 @@ class FastQFiltrator:
             self.gc_bounds = self._make_bounds(gc_bounds)
         except TypeError as e:
             self.logger.error(e, stack_info=True, exc_info=True)
+            raise e
 
         try:
             self.length_bounds = self._make_bounds(length_bounds)
         except TypeError as e:
             self.logger.error(e, stack_info=True, exc_info=True)
+            raise e
 
         self.quality_threshold = quality_threshold
 
