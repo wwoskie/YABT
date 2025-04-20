@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 from pathlib import Path
 
 VERBOSITY_LEVELS = {
@@ -18,13 +20,13 @@ def setup_class_logger(
     ),
     log_to_console: bool = True,
 ) -> logging.Logger:
-    """Setup logger for a class"""
-
-    logger_name = f"{class_name}"
+    """Setup unique logger for a class instance"""
+    instance_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    logger_name = f"{class_name}-{instance_id}"
     logger = logging.getLogger(logger_name)
 
-    if logger.hasHandlers():
-        return logger
+    # if logger.hasHandlers():
+    #     return logger
 
     logger.setLevel(logging.DEBUG)
 

@@ -72,7 +72,7 @@ class FastQFiltrator:
             verbosiy_file=2,
             log_file=Path(
                 self.logs_dir,
-                f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{self.__class__.__name__}.log",
+                f"{datetime.now().strftime('%Y%m%d-%H%M%S-%f')[:-3]}-{self.__class__.__name__}.log",
             ),
         )
 
@@ -129,20 +129,18 @@ class FastQFiltrator:
             If False, a unique file name will be generated to avoid overwriting.
             Default is False.
         """
-        self.logger.info("Writing fastq to file...")
-        if path_to_output is not None:
-            SeqIO.write(
-                self.reads, self._uniquify_path(path_to_output, rewrite), "fastq"
-            )
+        if isinstance(path_to_output, (str, Path)):
+            path_to_output = path_to_output
         elif path_to_output is None and self.path_to_input is not None:
             path_to_output = self.path_to_input
-            SeqIO.write(
-                self.reads, self._uniquify_path(path_to_output, rewrite), "fastq"
-            )
         else:
             raise ValueError(
                 "No output path was provided and could not create it from input path"
             )
+
+        self.logger.info(f"Writing fastq to file: {path_to_output}...")
+
+        SeqIO.write(self.reads, self._uniquify_path(path_to_output, rewrite), "fastq")
 
     def _passed_filter(self, read: SeqRecord) -> bool:
         return (
