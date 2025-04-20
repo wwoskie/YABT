@@ -224,7 +224,7 @@ class NucleicAcidSequence(BiologicalSequence):
         self._check_implementation()
         gc_count = 0
         for letter in self:
-            if letter.lower() == "g" or letter.lower == "c":
+            if letter.lower() == "g" or letter.lower() == "c":
                 gc_count += 1
         return gc_count / len(self)
 
