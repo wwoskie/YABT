@@ -1,142 +1,319 @@
-'''
-Yet another "cool" bioinformatics tool to handle DNAs, RNAs, proteins and filter .fastq
-'''
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from pathlib import Path
+from typing import Iterable, Iterator, Self
 
-import modules.dna_rna_tools as dna_rna_tools
-import modules.protein_tools as protein_tools
-import modules.fastq_tools as fastq_tools
-from modules.dna_rna_tools import create_input_dict
-from modules.protein_tools import read_seq_from_fasta
+from Bio import SeqIO, SeqUtils
+from Bio.SeqRecord import SeqRecord
 
 
-command_dict_nucl = {
-    'check_seq_type': dna_rna_tools.check_seq_type,
-    'reverse': dna_rna_tools.reverse,
-    'complement': dna_rna_tools.complement,
-    'transcribe': dna_rna_tools.transcribe,
-}
+class FastQFiltrator:
+    """
+    A class to filter FASTQ reads based on GC content, length, and quality thresholds.
 
+    Parameters
+    ----------
+    path_to_input : Path | str | None, optional
+        Path to the input FASTQ file. If provided, reads will be loaded from this file.
+        Default is None.
+    reads : Iterable[SeqRecord] | Iterator[SeqRecord] | None, optional
+        An iterable or iterator of SeqRecord objects representing the reads.
+        If provided, reads will be taken directly from this iterable.
+        Default is None.
+    gc_bounds : tuple[float, float] | float, optional
+        The GC content bounds for filtering. Can be a tuple (lower_bound, upper_bound)
+        or a single float representing the upper bound (lower bound defaults to 0).
+        Default is (0, 100).
+    length_bounds : tuple[int, int] | int, optional
+        The length bounds for filtering. Can be a tuple (lower_bound, upper_bound)
+        or a single integer representing the upper bound (lower bound defaults to 0).
+        Default is (0, 2**32).
+    quality_threshold : float, optional
+        The minimum average quality score required for a read to pass filtering.
+        Default is 0.
 
-command_dct_prot = {
-    'find_sites': protein_tools.find_sites,
-    'get_protein_rnas_number': protein_tools.get_protein_rnas_number,
-    'is_protein_valid': protein_tools.is_protein_valid,
-    'get_length_of_protein': protein_tools.get_length_of_protein,
-    'count_aa': protein_tools.count_aa,
-    'get_fracture_of_aa': protein_tools.get_fracture_of_aa,
-}
+    Raises
+    ------
+    ValueError
+        If neither `path_to_input` nor `reads` is provided, or if the provided `reads`
+        is not an iterable or iterator.
+    TypeError
+        If `gc_bounds` or `length_bounds` are not of the expected types.
 
+    Methods
+    -------
+    filter_fastq()
+        Filters the reads based on the specified GC content, length, and quality thresholds.
+    write_to_file(path_to_output: Path | str | None = None, rewrite: bool = False)
+        Writes the filtered reads to a FASTQ file.
+    """
 
-def run_dna_rna_tools(seqs: dict, command: str) -> dict:
-    '''
-    Runs dna_rna_tools on given dict of seqs with given command
-
-    Arguments:
-    - seqs (dict): Input dict of format {seq_name: 'seq'}
-
-    Return:
-    - output_dict (dict | str | bool): 
-        dict of results of operations {seq_name: 'result'} or one operation result 
-        if one sequence given
-    '''
-
-    output_dict = {}
-
-    for seq_name, seq in seqs.items():
-        if command == 'check_seq_type': # user may want to check given seqs
-            output_dict |= {seq_name: dna_rna_tools.check_seq_type(seq)}
-        else: # if other command
-            nucl_type = dna_rna_tools.check_seq_type(seq)
-            if nucl_type is None:
-                raise ValueError('Can only work with DNA or RNA sequence')
-
-            if command == 'complement':
-                output_dict |= {seq_name: dna_rna_tools.complement(seq, nucl_type)}
-            else:
-                output_dict |= {seq_name: command_dict_nucl[command](seq)}
-
-    if len(output_dict) == 1:
-        return output_dict[list(output_dict.keys())[0]]
-    return output_dict
-
-
-def run_fastq_tools(seqs: dict, # how can i make native type hint here?
-                    gc_bounds: tuple | list| int | float = (0, 100),
-                    length_bounds: tuple | list| int | float = (0, 2**32),
-                    quality_threshold: int | float = 0) -> dict:
-    '''
-    Runs fastq filtration by GC-content, length and quality procedure on input 
-    dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
-
-    Arguments:
-    - seqs (dict): input dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')}
-    - gc_bounds (tuple | list | int | float): 
-        bounds for GC filtration, can process int, float, or tuple and list of 
-        length 2. Default is (0, 100) (not filtered by GC)
-    - length_bounds (tuple | list| int | float): 
-        bounds for length filtration, full analog of gc_bounds. 
-        Default is (0, 2**32)
-    - quality_threshold (int | float): 
-        quality threshold to check against. Default is 0
-
-    Return:
-    - passed_filtration_seqs (dict): 
-        dict of format {'seq_name': ('nucl_seq', 'quality_for_seq')} with 
-        filtered seqs
-    '''
-
-    gc_bounds = fastq_tools.make_bounds(gc_bounds)
-    length_bounds = fastq_tools.make_bounds(length_bounds) # make tuple-like bounds
-
-    passed_filtration_seqs = {}
-
-    for read_name, (read_seq, read_quality) in seqs.items():
-        if len(read_seq) == 0: # dodge zero division error to a more understandable one
-            raise ValueError('Cannnot work with sequence of length 0')
-
-        has_passed_filters = (
-            fastq_tools.check_if_in_bounds(fastq_tools.count_gc_content(read_seq),
-                               gc_bounds) # is in gc bounds
-            and fastq_tools.check_if_in_bounds(len(read_seq),
-                                   length_bounds) # in length bounds
-            and fastq_tools.check_mean_quality(fastq_tools.count_mean_quality(read_quality),
-                                   quality_threshold) # quality greater than
+    def __init__(
+        self,
+        path_to_input: Path | str | None = None,
+        reads: Iterable[SeqRecord] | Iterator[SeqRecord] | None = None,
+        gc_bounds: tuple[float, float] | float = (0, 100),
+        length_bounds: tuple[int, int] | int = (0, 2**32),
+        quality_threshold: float = 0,
+    ) -> None:
+        # Handle read inputs: read from path or take reads
+        self.path_to_input = path_to_input
+        if isinstance(self.path_to_input, (Path, str)):
+            self._read_fastq(self.path_to_input)
+        elif isinstance(reads, (Iterable, Iterator)) and self.path_to_input is None:
+            self.reads = reads
+        else:
+            raise ValueError(
+                "Reads should be either be: iterable or iterator of reads,"
+                + f" but {type(reads).__name__} was given!"
             )
 
-        if has_passed_filters: # how can i avoid copy here?
-            passed_filtration_seqs[read_name] = seqs[read_name]
+        # Define thresholds
+        self.gc_bounds = self._make_bounds(gc_bounds)
+        self.length_bounds = self._make_bounds(length_bounds)
+        self.quality_threshold = quality_threshold
 
-    return passed_filtration_seqs
+    def filter_fastq(self) -> None:
+        """Filters the reads based on the specified GC content, length, and quality thresholds"""
+
+        reads_that_passed_filtration = []
+        for read in self.reads:
+            if self._passed_filter(read):
+                reads_that_passed_filtration.append(read)
+        self.reads = reads_that_passed_filtration
+
+    def write_to_file(
+        self, path_to_output: Path | str | None = None, rewrite: bool = False
+    ) -> None:
+        """
+        Writes the filtered reads to a FASTQ file
+
+        Parameters
+        ----------
+        path_to_output : Path | str | None, optional
+            Path to the output FASTQ file. If not provided, the input file path will be used.
+            Default is None.
+        rewrite : bool, optional
+            If True, the output file will be overwritten if it already exists.
+            If False, a unique file name will be generated to avoid overwriting.
+            Default is False.
+        """
+        if path_to_output is not None:
+            SeqIO.write(
+                self.reads, self._uniquify_path(path_to_output, rewrite), "fastq"
+            )
+        elif path_to_output is None and self.path_to_input is not None:
+            path_to_output = self.path_to_input
+            SeqIO.write(
+                self.reads, self._uniquify_path(path_to_output, rewrite), "fastq"
+            )
+        else:
+            raise ValueError(
+                "No output path was provided and could not create it from input path"
+            )
+
+    def _passed_filter(self, read: SeqRecord) -> bool:
+        return (
+            sum(read.letter_annotations["phred_quality"]) / len(read)
+            >= self.quality_threshold
+            and self._is_in_bounds(SeqUtils.gc_fraction(read.seq), self.gc_bounds)
+            and self._is_in_bounds(len(read), self.length_bounds)
+        )
+
+    def _read_fastq(self, path_to_input: Path | str) -> None:
+        iterator: Iterator[SeqRecord] = SeqIO.parse(path_to_input, "fastq")
+        self.reads = iterator
+
+    def _make_bounds(self, bounds: tuple[float, float] | float) -> tuple[float, float]:
+        if not (isinstance(bounds, tuple) and len(bounds) == 2) and not isinstance(
+            bounds, float
+        ):
+            raise TypeError(f"Cannot work with {type(bounds).__name__} type")
+
+        elif isinstance(bounds, float):
+            bounds = (0, bounds)
+
+        return bounds
+
+    def _uniquify_path(self, path: Path | str, rewrite: bool) -> Path | str:
+        if not rewrite:
+            path = Path(path) if isinstance(path, str) else path
+            parent, filename, extension = path.parent, path.stem, path.suffix
+            counter = 1
+
+            while path.exists():
+                path = Path(parent, filename + "_(" + str(counter) + ")" + extension)
+                counter += 1
+
+        return path
+
+    def _is_in_bounds(self, value: float, bounds: tuple[float, float]) -> bool:
+        return bounds[0] <= value <= bounds[1]
+
+    def __str__(self) -> str:
+        return (
+            "FastQFilter("
+            + f"\n\tgc_bounds={self.gc_bounds},"
+            + f"\n\tlength_bounds={self.length_bounds},"
+            + f"\n\tquality_threshold={self.quality_threshold}\n)"
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"FastQFilter(\n\tpath_to_input='{self.path_to_input}',"
+            + f"\n\tgc_bounds={self.gc_bounds},"
+            + f"\n\tlength_bounds={self.length_bounds},"
+            + f"\n\tquality_threshold={self.quality_threshold}\n)"
+        )
 
 
-def run_ultimate_protein_tools(seqs: dict,
-                               command: str,
-                               **kwargs) -> dict:
+class BiologicalSequence(str, ABC):
     """
-    Accepts command and runs it on input data with params
+    Abstract base class representing a biological sequence.
 
-    Arguments:
-    - seqs (str): Input in form of path, seq, seq list or seq dct
-    - command (str): Valid command from command_dct
-    - **kwargs to be passed to inner funcs
+    Attributes
+    ----------
+    alphabet : set
+        The set of valid characters in the sequence.
 
-    Return:
-    - output_dct (dict): 
-        dict where keys are number or name of seq and values are results of command run
+    Methods
+    -------
+    check_alphabet(alphabet: Iterable = None) -> bool
+        Checks if the sequence characters are within the given alphabet.
     """
 
-    output_dict = {}
-    for seq_name, seq in seqs.items():
-        if command in command_dct_prot:
-            if command == 'is_protein_valid':
-                output_dict |= {seq_name: protein_tools.is_protein_valid(seq)}
-            else:
-                if protein_tools.is_protein_valid(seq):
-                    output_dict |= {seq_name:
-                                    command_dct_prot[command](seq, **kwargs)}
-                else:
-                    raise ValueError(f'Invalid protein, name/number: {seq_name}')
+    @property
+    @abstractmethod
+    def alphabet(self) -> set[str]:
+        pass
 
-    if len(output_dict) == 1:
-        return output_dict[list(output_dict.keys())[0]]
-    return output_dict
+    def check_alphabet(self, alphabet: Iterable[str] | None = None) -> bool:
+        if alphabet is None:
+            alphabet = self.alphabet
+        return set(self).issubset(set(alphabet))
+
+
+class NucleicAcidSequence(BiologicalSequence):
+    """
+    Abstract base class representing a nucleic acid sequence.
+
+    Methods
+    -------
+    complement() -> Self
+        Returns the complement of the sequence.
+    gc_content() -> float
+        Calculates the GC content of the sequence.
+    """
+
+    @abstractmethod
+    def _comp_dct(self) -> None:
+        self._check_implementation()
+        pass
+
+    @property
+    def alphabet(self) -> set[str]:
+        self._check_implementation()
+        return set(self._comp_dct)
+
+    def complement(self: Self) -> Self:
+        self._check_implementation()
+        return self.__class__("".join([self._comp_dct[letter] for letter in self]))
+
+    @property
+    def gc_content(self) -> float:
+        self._check_implementation()
+        gc_count = 0
+        for letter in self:
+            if letter.lower() == "g" or letter.lower() == "c":
+                gc_count += 1
+        return gc_count / len(self)
+
+    def _check_implementation(self) -> None:
+        if type(self).__name__ == "NucleicAcidSequence":
+            raise NotImplementedError(
+                "This method is not implemented for 'NucleicAcidSequence'"
+            )
+
+
+class DNASequence(NucleicAcidSequence):
+    """
+    Class representing a DNA sequence.
+
+    Methods
+    -------
+    transcribe() -> RNASequence
+        Transcribes the DNA sequence into an RNA sequence.
+    """
+
+    @property
+    def _trans_dct(self) -> dict:
+        return {"T": "U", "u": "t"}
+
+    @property
+    def _comp_dct(self) -> dict:
+        return {
+            "G": "C",
+            "C": "G",
+            "g": "c",
+            "c": "g",
+        } | {"A": "T", "T": "A", "a": "t", "t": "a"}
+
+    def transcribe(self) -> str:
+        return RNASequence(
+            "".join(
+                [
+                    self._trans_dct[letter] if letter in self._trans_dct else letter
+                    for letter in self
+                ]
+            )
+        )
+
+    def __repr__(self):
+        return f"DNASequence('{self}')"
+
+
+class RNASequence(NucleicAcidSequence):
+    """
+    Class representing an RNA sequence.
+    """
+
+    @property
+    def _comp_dct(self) -> dict:
+        return {
+            "G": "C",
+            "C": "G",
+            "g": "c",
+            "c": "g",
+        } | {"A": "U", "U": "A", "a": "u", "u": "a"}
+
+    def __repr__(self):
+        return f"RNASequence('{self}')"
+
+
+class AminoAcidSequence(BiologicalSequence):
+    """
+    Class representing an amino acid sequence.
+
+    Methods
+    -------
+    count_aa() -> defaultdict
+        Counts the occurrences of each amino acid in the sequence.
+    """
+
+    __alphabet_cap = "FLSYCWPHQRIMTNKVADEGUO"
+    _alphabet = __alphabet_cap + __alphabet_cap.lower()
+
+    @property
+    def alphabet(self) -> set:
+        return set(self._alphabet)
+
+    def count_aa(self) -> defaultdict:
+        aa_counts = defaultdict(int)
+
+        for aa in self:
+            aa_counts[aa] += 1
+
+        return aa_counts
+
+    def __repr__(self):
+        return f"AminoAcidSequence('{self}')"
